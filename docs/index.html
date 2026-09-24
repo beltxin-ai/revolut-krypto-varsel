@@ -49,6 +49,7 @@ ol,ul{padding-left:20px}li{margin:4px 0}
 <body>
 <main>
   <div class="row sp"><h1>Radar Revolut X</h1><span class="mut sm" id="st">Cargando…</span></div>
+  <div id="latl" class="sm mut" hidden style="margin-top:6px"></div>
   <div id="reg"></div>
   <section class="card" id="det" aria-live="polite"></section>
   <section class="card" id="hoy"></section>
@@ -64,7 +65,7 @@ ol,ul{padding-left:20px}li{margin:4px 0}
   <section id="tab-universo" class="card" hidden>
     <div class="row sp" style="margin-bottom:8px"><input type="search" id="q" placeholder="Buscar…" aria-label="Buscar moneda"><span class="sm mut" id="un"></span></div>
     <div class="tw"><table><thead><tr>
-      <th data-k="ticker">Moneda</th><th data-k="precio">Precio</th><th data-k="cambio_24h">24 h</th><th data-k="tendencia">Tendencia</th>
+      <th data-k="ticker">Moneda</th><th data-k="acc">Acción</th><th data-k="precio">Precio</th><th data-k="cambio_24h">24 h</th><th data-k="tendencia">Tendencia</th>
       <th data-k="dist_max55">vs máx. 55 d</th><th data-k="atr_pct">ATR diario</th><th data-k="spread">Spread</th><th data-k="vol_usd">Vol. 24 h</th>
     </tr></thead><tbody id="tb"></tbody></table></div>
   </section>
@@ -89,7 +90,11 @@ async function cargar() {
   catch (e) { $('#st').textContent = 'Aún no hay datos. Vuelve en unos minutos.'; return; }
   if (!E) try { E = await fetch(RAW('investigacion') + 'resultados.json?t=' + Date.now(), {cache: 'no-store'}).then(r => r.json()); } catch (e) {}
   const min = Math.round((Date.now() / 1000 - D.actualizado) / 60);
-  $('#st').innerHTML = `Actualizado hace ${min} min · último cierre diario ${esc(D.ult_cierre)}` + (min > 40 ? ' · <b class="dn">datos atrasados</b>' : '');
+  const L = D.latidos || [], iv = (D.intervalo_s || 900) / 60, ahora = Date.now() / 1000;
+  const n2h = L.filter(t => ahora - t <= 7200).length, prox = Math.max(0, Math.round(iv - min));
+  $('#st').innerHTML = `Revisado hace ${min} min · próxima en ~${prox} min · <a href="#" id="lat">${n2h} revisiones en 2 h</a>` + (min > 40 ? ' · <b class="dn">datos atrasados</b>' : '');
+  $('#latl').innerHTML = '<b>Últimas revisiones (tu hora):</b> ' + L.slice(0, 16).map(t => new Date(t * 1000).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'})).join(' · ');
+  $('#lat').onclick = e => { e.preventDefault(); $('#latl').hidden = !$('#latl').hidden; };
   regimen(); hoy(); cartera(); vigilar(); universo(); evidencia(); metodo();
   const q = new URLSearchParams(location.search).get('moneda');
   if (activa) abrir(activa, true); else if (q) abrir(q);
@@ -102,18 +107,44 @@ function regimen() {
     <div class="sm">BTC ${usd(r.btc)} · ${pc(r.distancia)} frente a su media de 200 días (${usd(r.sma200)})</div></div>`;
 }
 
+const BADGE = {'MANTENER': 'g up', 'ALERTA': 'r dn', 'POSIBLE COMPRA': 'b2', 'VIGILAR': 'y', 'NO COMPRAR': 'n mut', 'SIN HUECO': 'n mut'};
+const badge = a => `<span class="b ${BADGE[a] || 'n'}">${esc(a)}</span>`;
+function lineaRec(x) {
+  const r = x.rec; if (!r) return '';
+  return `<div class="pos" data-t="${esc(x.ticker)}"><div>${badge(r.accion)} <b>${esc(x.ticker)}</b>
+    <div class="sm mut">${esc(r.texto)}${r.nivel ? ` · nivel ${usd(r.nivel)} (${r.dist >= 0 ? `precio un ${esn(r.dist * 100, 1)} % por encima` : `le falta un ${esn(-r.dist * 100, 1)} %`})` : ''}</div></div>
+    <div style="text-align:right;white-space:nowrap"><b>${usd(x.precio)}</b><div class="sm">${pc(x.cambio_24h)} 24 h</div></div></div>`;
+}
+function hastaCierre() {
+  const n = new Date(), c = Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate() + 1);
+  const m = Math.round((c - n) / 60000); return `${Math.floor(m / 60)} h ${m % 60} min`;
+}
 function hoy() {
-  const ev = D.eventos || [], ca = D.candidatas_hoy || [], c = D.cartera;
-  const ocupadas = c.satelite.length, libres = D.sistema.max_satelite - ocupadas;
-  $('#hoy').innerHTML = `<h2>Qué hacer ahora</h2>
-    ${ev.length ? `<p><b>Señales de esta revisión:</b> ${ev.map(e => `${e.tipo === 'entrada' ? '🟢 comprar' : e.tipo === 'stop' ? '🔴 stop' : '🔴 vender'} <a href="#" data-t="${esc(e.ticker)}">${esc(e.ticker)}</a>`).join(' · ')}</p>` : '<p class="mut">Sin órdenes nuevas en esta revisión. Mantén lo que indica la cartera modelo.</p>'}
-    <div class="grid">
+  const ev = D.eventos || [], c = D.cartera, F = D.filas || [];
+  const ocupadas = c.satelite.length;
+  const mias = F.filter(x => x.en_cartera).sort((a, b) => ((b.rec || {}).accion === 'ALERTA') - ((a.rec || {}).accion === 'ALERTA')), posibles = F.filter(x => x.rec && ['POSIBLE COMPRA', 'SIN HUECO'].includes(x.rec.accion));
+  const vig = F.filter(x => x.rec && x.rec.accion === 'VIGILAR');
+  const resto = F.length - mias.length - posibles.length - vig.length;
+  const sen = (D.senales || []).slice(0, 8);
+  $('#hoy').innerHTML = `<div class="row sp"><h2 style="margin:0">Recomendaciones</h2><span class="sm mut">Próxima decisión al cierre diario (00:00 UTC) · en ${hastaCierre()}</span></div>
+    ${ev.length ? `<div class="banner b2" style="margin:10px 0 0"><b>Órdenes nuevas en esta revisión:</b> ${ev.map(e => `${e.tipo === 'entrada' ? '🟢 COMPRAR' : '🔴 VENDER'} ${esc(e.ticker)}`).join(' · ')}</div>` : ''}
+    <h3>Tus posiciones: qué hacer</h3>
+    ${mias.map(lineaRec).join('') || '<p class="mut">Sin posiciones. Nada que mantener.</p>'}
+    <h3>Posibles compras al próximo cierre</h3>
+    ${posibles.map(lineaRec).join('') || `<p class="mut">Ninguna.${D.regimen.alcista ? '' : ' Con régimen bajista no se abren altcoins.'}</p>`}
+    ${posibles.length ? '<p class="note">Aún no son compras. Si al cierre siguen por encima del nivel, llegará la notificación 🟢 COMPRAR. Comprar antes es apostar a que la ruptura aguante: el sistema no se probó así.</p>' : ''}
+    ${vig.length ? `<h3>Vigilar (a menos de un 5 % de romper)</h3>${vig.map(lineaRec).join('')}` : ''}
+    <p class="sm mut" style="margin-top:10px">Resto del universo (${resto} monedas): <b>no comprar</b>.</p>
+    <h3>Últimas señales del sistema</h3>
+    ${sen.length ? `<div class="tw"><table><thead><tr><th>Moneda</th><th>Fecha</th><th>Señal</th><th>Precio</th><th>Stop / resultado</th><th>Tamaño</th></tr></thead><tbody>
+      ${sen.map(x => `<tr data-t="${esc(x.ticker)}"><td><b>${esc(x.ticker)}</b></td><td>${hora(x.t)}</td><td style="text-align:left">${x.tipo === 'entrada' ? '🟢 Comprar' : x.tipo === 'stop' ? '🔴 Stop' : '🔴 Vender'} · ${esc(x.sistema || '')}</td>
+      <td>${usd(x.precio)}</td><td>${x.tipo === 'entrada' ? (x.stop ? usd(x.stop) : 'por tendencia') : pc(x.ret, 1)}</td><td>${x.peso ? esn(x.peso * 100, 0) + ' %' : '–'}</td></tr>`).join('')}</tbody></table></div>` : '<p class="mut">Aún no hay señales.</p>'}
+    <div class="grid" style="margin-top:12px">
       <div class="kv"><span>Núcleo (BTC/ETH)</span><b>${c.nucleo.length ? c.nucleo.map(p => p.ticker).join(' + ') : 'fuera'}</b></div>
       <div class="kv"><span>Satélite</span><b>${ocupadas}/${D.sistema.max_satelite} posiciones</b></div>
       <div class="kv"><span>Liquidez</span><b>${esn(c.caja * 100, 0)} %</b></div>
       <div class="kv"><span>Cartera modelo</span><b>${pc(c.resumen.rentabilidad)}</b></div>
-    </div>
-    ${ca.length && (!D.regimen.alcista || libres <= 0) ? `<p class="note">Hoy rompen su máximo de 55 días ${ca.map(x => esc(x.ticker)).join(', ')}, pero no se compran: ${!D.regimen.alcista ? 'el régimen es bajista' : 'no quedan huecos en el satélite'}.</p>` : ''}`;
+    </div>`;
 }
 
 function filaPos(p, bloque) {
@@ -173,12 +204,12 @@ function vigilar() {
 function universo() {
   const q = $('#q').value.trim().toUpperCase();
   const f = D.filas.filter(x => !q || x.ticker.includes(q)).sort((a, b) => {
-    let x = a[sortK], y = b[sortK];
+    let x = sortK === 'acc' ? (a.rec || {}).accion : a[sortK], y = sortK === 'acc' ? (b.rec || {}).accion : b[sortK];
     if (typeof x === 'string' || typeof y === 'string') return asc ? String(x).localeCompare(y) : String(y).localeCompare(x);
     x = x ?? -1e18; y = y ?? -1e18; return asc ? x - y : y - x; });
   $('#un').textContent = `${D.universo_n} pares USD con volumen ≥ ${big(D.filtros.min_vol_usd)} y spread ≤ ${esn(D.filtros.max_spread * 100, 1)} %`;
   $('#tb').innerHTML = f.map(x => `<tr data-t="${esc(x.ticker)}"><td><b>${esc(x.ticker)}</b>${x.en_cartera ? ' <span class="up">●</span>' : ''}</td>
-    <td>${usd(x.precio)}</td><td>${pc(x.cambio_24h)}</td>
+    <td style="text-align:left">${x.rec ? badge(x.rec.accion) : '–'}</td><td>${usd(x.precio)}</td><td>${pc(x.cambio_24h)}</td>
     <td><span class="b ${x.tendencia === 'alcista' ? 'g up' : x.tendencia === 'bajista' ? 'r dn' : 'n mut'}">${esc(x.tendencia)}</span></td>
     <td>${pc(x.dist_max55)}</td><td>${x.atr_pct != null ? esn(x.atr_pct * 100, 1) + ' %' : '–'}</td>
     <td>${x.spread != null ? esn(x.spread * 100, 2) + ' %' : '–'}</td><td>${big(x.vol_usd)}</td></tr>`).join('');
