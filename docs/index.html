@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kryptoradar</title>
+<meta name="robots" content="noindex">
+<style>
+:root{--bg:#f6f5f2;--kort:#fff;--tekst:#1b1b1a;--svak:#6b6a66;--linje:#e4e2dc;--opp:#0f8a5f;--ned:#c2410c;--aksent:#3b5bdb;--gul:#a16207;--gulbg:#fef3c7;--rodbg:#fde7df;--gronnbg:#dcf3e8}
+@media (prefers-color-scheme:dark){:root{--bg:#141413;--kort:#1f1f1d;--tekst:#ecebe7;--svak:#9a9892;--linje:#33322f;--opp:#34d399;--ned:#fb923c;--aksent:#8ea2ff;--gul:#fcd34d;--gulbg:#3a2f10;--rodbg:#3b1d12;--gronnbg:#10301f}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tekst);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1100px;margin:0 auto;padding:20px 16px 60px}
+header{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between;margin-bottom:18px}
+h1{font-size:22px;margin:0;letter-spacing:-.01em}
+h2{font-size:16px;margin:0 0 12px}
+.meta{color:var(--svak);font-size:13px}
+.kort{background:var(--kort);border:1px solid var(--linje);border-radius:12px;padding:16px;margin-bottom:16px}
+.rutenett{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.tall{border:1px solid var(--linje);border-radius:10px;padding:10px 12px}
+.tall b{display:block;font-size:18px;font-variant-numeric:tabular-nums}
+.tall span{color:var(--svak);font-size:12px}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{text-align:right;padding:8px 6px;border-bottom:1px solid var(--linje);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--svak);font-weight:500;font-size:12px;cursor:pointer;user-select:none}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:color-mix(in srgb,var(--aksent) 7%,transparent)}
+.tabell{overflow-x:auto}
+.opp{color:var(--opp)}.ned{color:var(--ned)}
+.fane{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.fane button,.knapp{font:inherit;font-size:13px;border:1px solid var(--linje);background:transparent;color:var(--tekst);border-radius:999px;padding:5px 12px;cursor:pointer;text-decoration:none;display:inline-block}
+.fane button[aria-pressed=true]{background:var(--tekst);color:var(--bg);border-color:var(--tekst)}
+input[type=search]{font:inherit;width:100%;max-width:260px;padding:6px 10px;border:1px solid var(--linje);border-radius:8px;background:var(--kort);color:var(--tekst)}
+#detalj{display:none}
+#detalj.vis{display:block}
+.topp{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:center}
+.stor{font-size:28px;font-weight:600;margin:0}
+svg{width:100%;height:220px;display:block}
+.signal{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:8px;margin-bottom:6px;font-size:14px}
+.signal.g{background:var(--gronnbg)}.signal.y{background:var(--gulbg)}.signal.r{background:var(--rodbg)}
+.merke{font-weight:700;min-width:18px}
+.beskr{color:var(--svak);font-size:14px;max-height:7.5em;overflow:auto}
+.tom{color:var(--svak);padding:18px 0;text-align:center}
+.lenker{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+footer{color:var(--svak);font-size:12px;margin-top:24px}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>Kryptoradar · Revolut</h1>
+  <div class="meta" id="status">Laster data …</div>
+</header>
+
+<section class="kort" id="detalj" aria-live="polite">
+  <div class="topp">
+    <div><p class="stor" id="d-navn"></p><div class="meta" id="d-pris"></div></div>
+    <button class="knapp" id="lukk">Lukk ✕</button>
+  </div>
+  <div class="fane" id="graf-valg" style="margin-top:12px">
+    <button aria-pressed="true" data-g="graf_1d">24 t</button>
+    <button aria-pressed="false" data-g="graf_7d">7 dager</button>
+  </div>
+  <div id="graf"></div>
+  <div class="rutenett" id="d-tall" style="margin:14px 0"></div>
+  <h2>Hurtigsjekk før du vurderer kjøp</h2>
+  <div id="d-signal"></div>
+  <p class="beskr" id="d-beskr"></p>
+  <div class="lenker" id="d-lenker"></div>
+</section>
+
+<section class="kort">
+  <h2>Varsler sendt til mobilen</h2>
+  <div class="tabell"><table>
+    <thead><tr><th>Mynt</th><th>Tidspunkt</th><th>1 t</th><th>24 t</th><th>7 d</th><th>Pris</th><th>Volum 24 t</th></tr></thead>
+    <tbody id="varsler"></tbody>
+  </table></div>
+</section>
+
+<section class="kort">
+  <div class="topp" style="margin-bottom:10px">
+    <h2 style="margin:0">Alle mynter i Revolut</h2>
+    <input type="search" id="sok" placeholder="Søk ticker …" aria-label="Søk etter mynt">
+  </div>
+  <div class="tabell"><table>
+    <thead><tr>
+      <th data-k="ticker">Mynt</th><th data-k="h1">1 t</th><th data-k="d1">24 t ▼</th><th data-k="w1">7 d</th>
+      <th data-k="pris">Pris</th><th data-k="volum">Volum 24 t</th><th data-k="mcap">Markedsverdi</th>
+    </tr></thead>
+    <tbody id="marked"></tbody>
+  </table></div>
+</section>
+
+<footer>Data: Revolut (Norge, NOK), oppdatert ca. hvert 15. minutt av GitHub Actions. Dette er et analyseverktøy, ikke investeringsråd. Kryptovaluta kan falle like raskt som den stiger.</footer>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+let DATA = null, sortK = 'd1', sortOpp = false, aktivGraf = 'graf_1d', aktivMynt = null, aktivDetalj = null;
+
+const pst = v => v == null ? '–' : `<span class="${v >= 0 ? 'opp' : 'ned'}">${v >= 0 ? '+' : ''}${v.toFixed(1)} %</span>`;
+const kr = x => x == null ? '–' : x >= 1e9 ? (x/1e9).toFixed(1)+' mrd' : x >= 1e6 ? (x/1e6).toFixed(1)+' mill' : Math.round(x).toLocaleString('nb-NO');
+const pris = p => p == null ? '–' : p >= 1 ? p.toLocaleString('nb-NO',{maximumFractionDigits:2})+' kr' : Number(p).toPrecision(4)+' kr';
+const tid = t => new Date(t*1000).toLocaleString('nb-NO',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+async function last() {
+  try {
+    const r = await fetch('data.json?t=' + Date.now());
+    DATA = await r.json();
+    const min = Math.round((Date.now()/1000 - DATA.oppdatert)/60);
+    $('#status').textContent = `${DATA.antall} mynter · oppdatert for ${min} min siden · varsel ved ≥ ${DATA.innstillinger.terskel_24t} % (24 t) eller ≥ ${DATA.innstillinger.terskel_1t} % (1 t)` + (DATA.kilde !== 'revolut' ? ' · reservekilde: CoinGecko' : '');
+    tegnVarsler(); tegnMarked();
+    const q = new URLSearchParams(location.search).get('mynt');
+    if (q && !aktivMynt) visMynt(q);
+  } catch (e) {
+    $('#status').textContent = 'Fant ingen data ennå. Første kjøring kommer innen 15 minutter.';
+  }
+}
+
+function tegnVarsler() {
+  const v = DATA.varsler || [];
+  $('#varsler').innerHTML = v.length ? v.map(a => `<tr data-t="${esc(a.ticker)}"><td><b>${esc(a.ticker)}</b></td><td>${tid(a.tid)}</td><td>${pst(a.h1)}</td><td>${pst(a.d1)}</td><td>${pst(a.w1)}</td><td>${pris(a.pris)}</td><td>${kr(a.volum)}</td></tr>`).join('')
+    : `<tr><td colspan="7" class="tom">Ingen varsler ennå. Når en mynt stiger over terskelen, dukker den opp her og på mobilen.</td></tr>`;
+}
+
+function tegnMarked() {
+  const q = $('#sok').value.trim().toUpperCase();
+  let m = DATA.marked.filter(x => !q || x.ticker.includes(q));
+  m.sort((a,b) => {
+    const x = a[sortK], y = b[sortK];
+    if (typeof x === 'string') return sortOpp ? x.localeCompare(y) : y.localeCompare(x);
+    return sortOpp ? (x ?? -1e18) - (y ?? -1e18) : (y ?? -1e18) - (x ?? -1e18);
+  });
+  $('#marked').innerHTML = m.slice(0, 400).map(a => `<tr data-t="${esc(a.ticker)}"><td><b>${esc(a.ticker)}</b></td><td>${pst(a.h1)}</td><td>${pst(a.d1)}</td><td>${pst(a.w1)}</td><td>${pris(a.pris)}</td><td>${kr(a.volum)}</td><td>${kr(a.mcap)}</td></tr>`).join('');
+}
+
+function signaler(m, d) {
+  const s = [];
+  const vm = m.mcap ? m.volum / m.mcap : null;
+  if (m.mcap && m.mcap < 500e6) s.push(['r','!',`Lav markedsverdi (${kr(m.mcap)} kr). Små mynter er lette å pumpe opp og ned.`]);
+  else if (m.mcap && m.mcap < 5e9) s.push(['y','~',`Middels markedsverdi (${kr(m.mcap)} kr). Større svingninger enn de store myntene.`]);
+  else if (m.mcap) s.push(['g','✓',`Høy markedsverdi (${kr(m.mcap)} kr).`]);
+  if (vm != null) {
+    if (vm > 1) s.push(['r','!',`Volumet på 24 t er ${(vm*100).toFixed(0)} % av markedsverdien. Ekstrem omsetning, typisk ved pump eller nyhet. Sjekk hva som skjer.`]);
+    else if (vm > 0.2) s.push(['y','~',`Volum/markedsverdi ${(vm*100).toFixed(0)} %. Mye aktivitet, stigningen har reell omsetning bak seg.`]);
+    else s.push(['y','~',`Volum/markedsverdi bare ${(vm*100).toFixed(1)} %. Stigningen kan være tynt handlet.`]);
+  }
+  if (m.d1 != null && m.h1 != null && m.d1 > 20) {
+    if (m.h1 < -3) s.push(['r','!',`Faller siste time (${m.h1.toFixed(1)} %). Toppen kan allerede være passert.`]);
+    else if (m.h1 > 5) s.push(['y','~',`Stiger fortsatt kraftig siste time (+${m.h1.toFixed(1)} %). Høy risiko for å kjøpe nær toppen.`]);
+    else s.push(['g','✓',`Rolig siste time (${m.h1 >= 0 ? '+' : ''}${m.h1.toFixed(1)} %). Bevegelsen har stabilisert seg foreløpig.`]);
+  }
+  if (m.w1 != null && m.d1 != null && m.w1 > m.d1 * 2 && m.w1 > 60) s.push(['y','~',`Har steget ${m.w1.toFixed(0)} % på 7 dager. Dette er ikke starten på bevegelsen.`]);
+  const p = d?.graf_7d?.points;
+  if (p && p.length > 5) {
+    const r = p.map(x => +x.rate), lo = Math.min(...r), hi = Math.max(...r), na = r[r.length-1];
+    s.push([na >= hi*0.97 ? 'y' : 'g', na >= hi*0.97 ? '~' : 'i', `Pris er ${((na/lo-1)*100).toFixed(0)} % over bunnen og ${((1-na/hi)*100).toFixed(0)} % under toppen de siste 7 dagene.`]);
+  }
+  s.push(['y','?','Sjekk nyheter (børsnotering, partnerskap, token-opplåsing) før du bestemmer deg. Husk Revoluts kjøps-/salgsgebyr.']);
+  return s.map(([k,t,x]) => `<div class="signal ${k}"><span class="merke">${t}</span><span>${esc(x)}</span></div>`).join('');
+}
+
+function tegnGraf() {
+  const g = aktivDetalj?.[aktivGraf];
+  if (!g?.points?.length) { $('#graf').innerHTML = '<p class="tom">Graf lagres bare for mynter som har utløst et varsel. Åpne Revolut-lenken for full graf.</p>'; return; }
+  const p = g.points.map(x => [x.start, +x.rate]), W = 800, H = 220, pad = 8;
+  const xs = p.map(a=>a[0]), ys = p.map(a=>a[1]);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+  const X = x => pad + (x-x0)/(x1-x0||1)*(W-2*pad), Y = y => H-pad - (y-y0)/(y1-y0||1)*(H-2*pad);
+  const d = p.map((a,i) => (i?'L':'M') + X(a[0]).toFixed(1) + ' ' + Y(a[1]).toFixed(1)).join(' ');
+  const farge = ys[ys.length-1] >= ys[0] ? 'var(--opp)' : 'var(--ned)';
+  $('#graf').innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Prisgraf">
+    <path d="${d} L ${X(x1)} ${H} L ${X(x0)} ${H} Z" fill="${farge}" opacity=".08"/>
+    <path d="${d}" fill="none" stroke="${farge}" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>
+    <div class="meta">Lav ${pris(y0)} · Høy ${pris(y1)} · Endring ${esc(g.percentageChange || '')} · lagret ${tid(aktivDetalj.oppdatert)}</div>`;
+}
+
+async function visMynt(t) {
+  const m = DATA.marked.find(x => x.ticker === t);
+  if (!m) return;
+  aktivMynt = t; aktivDetalj = null;
+  try { const r = await fetch(`mynter/${encodeURIComponent(t)}.json?t=${Date.now()}`); if (r.ok) aktivDetalj = await r.json(); } catch {}
+  $('#d-navn').textContent = t;
+  $('#d-pris').innerHTML = `${pris(m.pris)} · 24 t ${pst(m.d1)}`;
+  $('#d-tall').innerHTML = [['1 time',pst(m.h1)],['24 timer',pst(m.d1)],['7 dager',pst(m.w1)],['Volum 24 t',kr(m.volum)+' kr'],['Markedsverdi',kr(m.mcap)+' kr']]
+    .map(([a,b]) => `<div class="tall"><span>${a}</span><b>${b}</b></div>`).join('');
+  $('#d-signal').innerHTML = signaler(m, aktivDetalj);
+  $('#d-beskr').textContent = aktivDetalj?.detaljer?.description || '';
+  const slug = t.toLowerCase();
+  $('#d-lenker').innerHTML = `<a class="knapp" target="_blank" rel="noopener" href="https://www.revolut.com/en-NO/crypto/price/${slug}/">Revolut ↗</a>
+    <a class="knapp" target="_blank" rel="noopener" href="https://www.coingecko.com/en/search?query=${slug}">CoinGecko ↗</a>
+    <a class="knapp" target="_blank" rel="noopener" href="https://news.google.com/search?q=${encodeURIComponent(t+' crypto')}&hl=nb">Nyheter ↗</a>` +
+    (aktivDetalj?.detaljer?.website ? `<a class="knapp" target="_blank" rel="noopener" href="${esc(aktivDetalj.detaljer.website)}">Nettside ↗</a>` : '');
+  tegnGraf();
+  $('#detalj').classList.add('vis');
+  $('#detalj').scrollIntoView({behavior:'smooth'});
+  history.replaceState(null, '', '?mynt=' + encodeURIComponent(t));
+}
+
+document.addEventListener('click', e => {
+  const tr = e.target.closest('tbody tr[data-t]'); if (tr) return visMynt(tr.dataset.t);
+  const th = e.target.closest('th[data-k]');
+  if (th) { const k = th.dataset.k; sortOpp = sortK === k ? !sortOpp : k === 'ticker'; sortK = k;
+    document.querySelectorAll('th[data-k]').forEach(h => h.textContent = h.textContent.replace(/ [▲▼]$/, ''));
+    th.textContent += sortOpp ? ' ▲' : ' ▼'; tegnMarked(); }
+  const gb = e.target.closest('#graf-valg button');
+  if (gb) { aktivGraf = gb.dataset.g; document.querySelectorAll('#graf-valg button').forEach(b => b.setAttribute('aria-pressed', b === gb)); tegnGraf(); }
+});
+$('#lukk').onclick = () => { $('#detalj').classList.remove('vis'); aktivMynt = null; history.replaceState(null,'',location.pathname); };
+$('#sok').oninput = () => DATA && tegnMarked();
+last(); setInterval(last, 5*60*1000);
+</script>
+</body>
+</html>
