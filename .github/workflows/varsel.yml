@@ -1,74 +1,105 @@
-name: Kryptovarsel
+name: Radar cripto
 
+# Una ejecución dura ~5,5 h y analiza el mercado cada 15 min; al terminar lanza la
+# siguiente. El cron horario es solo un respaldo (el de GitHub es poco fiable).
 on:
   schedule:
-    - cron: "*/15 * * * *"   # hvert 15. minutt (GitHub kan forsinke kjøringen noen minutter)
+    - cron: "23 * * * *"
   workflow_dispatch:
     inputs:
       test:
-        description: "Send testvarsel til mobilen"
+        description: "Enviar notificación de prueba al móvil"
         type: boolean
         default: false
 
 permissions:
-  contents: read
+  contents: write
+  actions: write
   pages: write
   id-token: write
 
 concurrency:
-  group: kryptovarsel
+  group: radar-cripto
   cancel-in-progress: false
 
+env:
+  INTERVALO_SEG: 900       # 15 minutos
+  DURACION_MIN: 330        # 5,5 horas por ejecución
+
 jobs:
-  sjekk:
+  panel:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     environment:
       name: github-pages
       url: ${{ steps.pages.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Hent lagret status
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            state
-            docs/mynter
-          key: status-${{ github.run_id }}
-          restore-keys: status-
-
-      - name: Testvarsel
-        if: ${{ inputs.test }}
-        env:
-          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
-        run: python varsel.py --test
-
-      - name: Sjekk kurser og varsle
-        env:
-          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
-          PANEL_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
-          TERSKEL_24T: ${{ vars.TERSKEL_24T || '20' }}
-          TERSKEL_1T: ${{ vars.TERSKEL_1T || '20' }}
-          MIN_VOLUM_NOK: ${{ vars.MIN_VOLUM_NOK || '1000000' }}
-        run: python varsel.py
-
-      - name: Lagre status
-        if: always()
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            state
-            docs/mynter
-          key: status-${{ github.run_id }}
-
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
           path: docs
       - id: pages
         uses: actions/deploy-pages@v4
+
+  radar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - name: Hora de inicio
+        run: echo "INICIO=$(date +%s)" >> "$GITHUB_ENV"
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Recuperar datos (rama data)
+        run: |
+          git clone -q --depth 1 -b data "https://github.com/${GITHUB_REPOSITORY}.git" data || mkdir -p data
+          rm -rf data/.git data/mynter data/state/status.json
+
+      - name: Notificación de prueba
+        if: ${{ inputs.test }}
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: python varsel.py --test
+
+      - name: Radar (bucle cada 15 min)
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          PANEL_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+          MIN_VOLUM_NOK: ${{ vars.MIN_VOLUM_NOK || '5000000' }}
+          DATA_DIR: data
+          CACHE_DIR: cache
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          publicar() {
+            ( cd data && rm -rf .git && git init -q -b data && git add -A \
+              && git -c user.name="radar" -c user.email="actions@users.noreply.github.com" commit -qm "datos $(date -u +%FT%TZ)" \
+              && git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" data ) \
+              || echo "No se pudo publicar"
+            rm -rf data/.git
+          }
+          FIN=$(( SECONDS + DURACION_MIN * 60 ))
+          while [ $SECONDS -lt $FIN ]; do
+            T0=$SECONDS
+            echo "::group::Análisis $(date -u +%H:%M) UTC"
+            timeout 780 python varsel.py || echo "El análisis falló; se reintenta en la próxima vuelta"
+            publicar
+            echo "::endgroup::"
+            ESPERA=$(( INTERVALO_SEG - (SECONDS - T0) ))
+            [ $ESPERA -gt 0 ] && sleep $ESPERA
+          done
+
+      - name: Lanzar la siguiente ejecución
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Solo si esta ejecución duró 30 min o más (evita un bucle de errores)
+          if [ $(( $(date +%s) - INICIO )) -ge 1800 ]; then
+            gh workflow run varsel.yml --ref "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}"
+          else
+            echo "Ejecución corta: la siguiente la lanzará el cron."
+          fi
