@@ -1,29 +1,37 @@
-# Kryptoradar · Revolut
+# Radar Cripto · Revolut
 
-Sender push-varsel til mobilen (ntfy) når en kryptovaluta i Revolut stiger mer enn 20 % på 24 timer eller 1 time. Hver mynt som utløser et varsel får en egen analyseside med graf og hurtigsjekk.
+Análisis técnico de todas las criptos de Revolut cada 15 minutos, con señal **COMPRAR / MANTENER / ESPERAR / NEUTRAL / VENDER**, niveles (entrada, stop, objetivos, tamaño) y notificaciones al móvil (ntfy).
 
-## Slik virker det
+## Fuentes
 
-- `varsel.py` henter alle kryptovalutaer Revolut tilbyr i Norge (priser i NOK) hvert 15. minutt via GitHub Actions.
-- Stablecoins og mynter med mindre enn 1 mill. kr i volum på 24 t ignoreres.
-- Samme mynt varsles ikke på nytt før det har gått 12 timer, med mindre den har steget ytterligere 15 prosentpoeng.
-- Hvis Revolut ikke svarer, brukes CoinGecko som reserve, og du får beskjed.
-- Analysepanelet (`docs/index.html`) publiseres på GitHub Pages.
+| Fuente | Uso |
+|---|---|
+| Revolut | Universo de monedas y precio en NOK (el precio al que operas) |
+| Binance (data-api.binance.vision) | Velas de 4 h y diarias con volumen |
+| OKX | Respaldo de velas |
+| Hyperliquid | Funding e interés abierto de perpetuos |
+| alternative.me | Índice Fear & Greed |
+| CoinGecko | Dominancia de BTC |
 
-## Endre innstillinger
+Las velas de un exchange solo se usan si su precio en NOK difiere menos de un 4 % del de Revolut.
 
-Under **Settings → Secrets and variables → Actions → Variables** kan du legge inn:
+## Estrategia (`estrategia.py`)
 
-| Variabel | Standard | Betydning |
-|---|---|---|
-| `TERSKEL_24T` | 20 | % stigning på 24 t som gir varsel |
-| `TERSKEL_1T` | 20 | % stigning på 1 t som gir varsel |
-| `MIN_VOLUM_NOK` | 1000000 | Minste handelsvolum på 24 t |
+Swing corto (horas a pocos días) con velas de 4 h cerradas y filtro diario. Siete pilares de −2 a +2: tendencia diaria, tendencia 4 h, momento, volumen y flujo, fuerza relativa frente a BTC, régimen de mercado y derivados. Nota ponderada de −100 a +100.
 
-Secret `NTFY_TOPIC` er navnet på ntfy-emnet mobilen abonnerer på.
+- **COMPRAR**: nota ≥ 45 (≥ 60 si el mercado es bajista), tendencia 4 h alcista, diaria no bajista, precio a menos de 3 ATR de la EMA20, liquidez suficiente, confirmada en 2 revisiones seguidas.
+- **VENDER**: nota ≤ −35, o tendencia y momento 4 h bajistas, o stop tocado.
+- **Stop** 2 ATR (o bajo el mínimo reciente), trailing de 3 ATR. **Tamaño**: riesgo máximo 1 % del capital.
 
-## Testvarsel
+Cada COMPRAR confirmado abre una posición virtual para medir resultados reales. Un backtest diario en velas de 4 h (con comisiones de Revolut X) muestra si la estrategia tiene ventaja.
 
-**Actions → Kryptovarsel → Run workflow**, huk av «Send testvarsel».
+## Notificaciones
 
-> Dette er et analyseverktøy, ikke investeringsråd. Revolut-dataene kommer fra et uoffisielt endepunkt som kan endres uten forvarsel.
+- 🟢 **COMPRAR** confirmado, con entrada, stop, objetivos y tamaño.
+- 🔴 **VENDER** o stop de una posición abierta.
+
+## Ajustes
+
+En **Settings → Secrets and variables → Actions → Variables**: `MIN_VOLUM_NOK` (volumen mínimo en 24 h, por defecto 5 000 000). El secret `NTFY_TOPIC` es el tema de ntfy del móvil.
+
+> Herramienta de análisis, no asesoramiento financiero. Reglas no garantizadas; el backtest no incluye régimen ni derivados.
