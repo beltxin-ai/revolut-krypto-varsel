@@ -1,216 +1,317 @@
 <!doctype html>
-<html lang="nb">
+<html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Kryptoradar</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Radar Cripto</title>
 <meta name="robots" content="noindex">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Radar Cripto">
 <style>
-:root{--bg:#f6f5f2;--kort:#fff;--tekst:#1b1b1a;--svak:#6b6a66;--linje:#e4e2dc;--opp:#0f8a5f;--ned:#c2410c;--aksent:#3b5bdb;--gul:#a16207;--gulbg:#fef3c7;--rodbg:#fde7df;--gronnbg:#dcf3e8}
-@media (prefers-color-scheme:dark){:root{--bg:#141413;--kort:#1f1f1d;--tekst:#ecebe7;--svak:#9a9892;--linje:#33322f;--opp:#34d399;--ned:#fb923c;--aksent:#8ea2ff;--gul:#fcd34d;--gulbg:#3a2f10;--rodbg:#3b1d12;--gronnbg:#10301f}}
+:root{--bg:#f5f5f3;--card:#fff;--tx:#18181b;--mut:#6b6b70;--ln:#e5e4e0;--up:#0e8a5a;--dn:#c2410c;--acc:#3b5bdb;--am:#a16207;
+--gbg:#dcf3e8;--ybg:#fef3c7;--rbg:#fde7df;--bbg:#e0e7ff;--nbg:#efefec}
+@media (prefers-color-scheme:dark){:root{--bg:#111113;--card:#1b1b1e;--tx:#ececec;--mut:#9b9ba1;--ln:#2e2e33;--up:#34d399;--dn:#fb923c;--acc:#8ea2ff;--am:#fcd34d;
+--gbg:#10301f;--ybg:#3a2f10;--rbg:#3b1d12;--bbg:#1e2550;--nbg:#26262a}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--tekst);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
-main{max-width:1100px;margin:0 auto;padding:20px 16px 60px}
-header{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between;margin-bottom:18px}
-h1{font-size:22px;margin:0;letter-spacing:-.01em}
-h2{font-size:16px;margin:0 0 12px}
-.meta{color:var(--svak);font-size:13px}
-.kort{background:var(--kort);border:1px solid var(--linje);border-radius:12px;padding:16px;margin-bottom:16px}
-.rutenett{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-.tall{border:1px solid var(--linje);border-radius:10px;padding:10px 12px}
-.tall b{display:block;font-size:18px;font-variant-numeric:tabular-nums}
-.tall span{color:var(--svak);font-size:12px}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-text-size-adjust:100%}
+main{max-width:1180px;margin:0 auto;padding:16px 16px 64px}
+h1{font-size:20px;margin:0}h2{font-size:15px;margin:0 0 10px}h3{font-size:12px;margin:16px 0 6px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
+.mut{color:var(--mut)}.sm{font-size:12px}.up{color:var(--up)}.dn{color:var(--dn)}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:14px;margin-bottom:12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.sp{justify-content:space-between}
+.chip{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--ln);border-radius:999px;padding:4px 10px;font-size:12px;background:var(--card)}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.tile{border:1px solid var(--ln);border-radius:10px;padding:10px 12px;cursor:pointer;background:var(--card);text-align:left;font:inherit;color:inherit}
+.tile b{display:block;font-size:22px;font-variant-numeric:tabular-nums}.tile[aria-pressed=true]{outline:2px solid var(--acc)}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--ln);margin:14px 0 12px;overflow-x:auto}
+.tabs button{font:inherit;border:0;background:none;color:var(--mut);padding:8px 12px;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected=true]{color:var(--tx);border-color:var(--acc);font-weight:600}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
 table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
-th,td{text-align:right;padding:8px 6px;border-bottom:1px solid var(--linje);white-space:nowrap}
-th:first-child,td:first-child{text-align:left}
-th{color:var(--svak);font-weight:500;font-size:12px;cursor:pointer;user-select:none}
-tbody tr{cursor:pointer}
-tbody tr:hover{background:color-mix(in srgb,var(--aksent) 7%,transparent)}
-.tabell{overflow-x:auto}
-.opp{color:var(--opp)}.ned{color:var(--ned)}
-.fane{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
-.fane button,.knapp{font:inherit;font-size:13px;border:1px solid var(--linje);background:transparent;color:var(--tekst);border-radius:999px;padding:5px 12px;cursor:pointer;text-decoration:none;display:inline-block}
-.fane button[aria-pressed=true]{background:var(--tekst);color:var(--bg);border-color:var(--tekst)}
-input[type=search]{font:inherit;width:100%;max-width:260px;padding:6px 10px;border:1px solid var(--linje);border-radius:8px;background:var(--kort);color:var(--tekst)}
-#detalj{display:none}
-#detalj.vis{display:block}
-.topp{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:center}
-.stor{font-size:28px;font-weight:600;margin:0}
-svg{width:100%;height:220px;display:block}
-.signal{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:8px;margin-bottom:6px;font-size:14px}
-.signal.g{background:var(--gronnbg)}.signal.y{background:var(--gulbg)}.signal.r{background:var(--rodbg)}
-.merke{font-weight:700;min-width:18px}
-.beskr{color:var(--svak);font-size:14px;max-height:7.5em;overflow:auto}
-.tom{color:var(--svak);padding:18px 0;text-align:center}
-.lenker{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-footer{color:var(--svak);font-size:12px;margin-top:24px}
+th,td{padding:8px 6px;border-bottom:1px solid var(--ln);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--card)}
+th{font-weight:500;color:var(--mut);font-size:12px;cursor:pointer;user-select:none}
+tbody tr{cursor:pointer}tbody tr:hover td{background:color-mix(in srgb,var(--acc) 6%,var(--card))}
+.b{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.03em;padding:2px 8px;border-radius:999px}
+.COMPRAR{background:var(--gbg);color:var(--up)}.VENDER{background:var(--rbg);color:var(--dn)}.ESPERAR{background:var(--ybg);color:var(--am)}
+.MANTENER{background:var(--bbg);color:var(--acc)}.NEUTRAL,.SIN{background:var(--nbg);color:var(--mut)}
+.bar{display:inline-block;width:56px;height:6px;border-radius:3px;background:var(--nbg);position:relative;vertical-align:middle;margin-left:6px;overflow:hidden}
+.bar i{position:absolute;top:0;bottom:0}
+input[type=search]{font:inherit;padding:6px 10px;border:1px solid var(--ln);border-radius:8px;background:var(--card);color:var(--tx);max-width:220px;width:100%}
+label.tg{display:inline-flex;gap:6px;align-items:center;font-size:12px;color:var(--mut)}
+#det{display:none}#det.on{display:block}
+.big{font-size:30px;font-weight:700;margin:0;letter-spacing:-.01em}
+.sig{border-radius:12px;padding:14px;margin:12px 0}
+.sig .l{font-size:11px;text-transform:uppercase;letter-spacing:.05em;opacity:.8}
+.sig .v{font-size:28px;font-weight:800;letter-spacing:-.01em}
+.kv{border:1px solid var(--ln);border-radius:10px;padding:8px 10px}
+.kv span{display:block;font-size:11px;color:var(--mut)}.kv b{font-variant-numeric:tabular-nums}
+.pil{display:grid;grid-template-columns:150px 60px 1fr;gap:4px 10px;align-items:start;padding:8px 0;border-bottom:1px solid var(--ln)}
+.pil .n{font-weight:600}.pil .x{color:var(--mut);font-size:13px}
+.meter{height:8px;border-radius:4px;background:var(--nbg);position:relative;margin-top:6px}
+.meter i{position:absolute;top:0;bottom:0;left:50%;border-radius:4px}
+.meter:after{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--mut)}
+svg.ch{width:100%;height:240px;display:block}
+.btn{font:inherit;font-size:13px;border:1px solid var(--ln);background:var(--card);color:var(--tx);border-radius:999px;padding:6px 12px;cursor:pointer;text-decoration:none;display:inline-block}
+.note{font-size:12px;color:var(--mut);margin-top:8px}
+.warn{background:var(--ybg);border-radius:10px;padding:10px 12px;font-size:13px}
+@media (max-width:640px){.pil{grid-template-columns:1fr 50px}.pil .x{grid-column:1/3}.big{font-size:26px}}
 </style>
 </head>
 <body>
 <main>
-<header>
-  <h1>Kryptoradar · Revolut</h1>
-  <div class="meta" id="status">Laster data …</div>
-</header>
-
-<section class="kort" id="detalj" aria-live="polite">
-  <div class="topp">
-    <div><p class="stor" id="d-navn"></p><div class="meta" id="d-pris"></div></div>
-    <button class="knapp" id="lukk">Lukk ✕</button>
+  <div class="row sp"><h1>Radar Cripto · Revolut</h1><span class="mut sm" id="st">Cargando…</span></div>
+  <div class="row" id="reg" style="margin:10px 0 12px"></div>
+  <div class="grid" id="tiles"></div>
+  <section class="card" id="det" aria-live="polite" style="margin-top:12px"></section>
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="senales">Señales</button>
+    <button role="tab" aria-selected="false" data-tab="pos">Posiciones</button>
+    <button role="tab" aria-selected="false" data-tab="fiab">Fiabilidad</button>
+    <button role="tab" aria-selected="false" data-tab="met">Método y fuentes</button>
   </div>
-  <div class="fane" id="graf-valg" style="margin-top:12px">
-    <button aria-pressed="true" data-g="graf_1d">24 t</button>
-    <button aria-pressed="false" data-g="graf_7d">7 dager</button>
-  </div>
-  <div id="graf"></div>
-  <div class="rutenett" id="d-tall" style="margin:14px 0"></div>
-  <h2>Hurtigsjekk før du vurderer kjøp</h2>
-  <div id="d-signal"></div>
-  <p class="beskr" id="d-beskr"></p>
-  <div class="lenker" id="d-lenker"></div>
-</section>
-
-<section class="kort">
-  <h2>Varsler sendt til mobilen</h2>
-  <div class="tabell"><table>
-    <thead><tr><th>Mynt</th><th>Tidspunkt</th><th>1 t</th><th>24 t</th><th>7 d</th><th>Pris</th><th>Volum 24 t</th></tr></thead>
-    <tbody id="varsler"></tbody>
-  </table></div>
-</section>
-
-<section class="kort">
-  <div class="topp" style="margin-bottom:10px">
-    <h2 style="margin:0">Alle mynter i Revolut</h2>
-    <input type="search" id="sok" placeholder="Søk ticker …" aria-label="Søk etter mynt">
-  </div>
-  <div class="tabell"><table>
-    <thead><tr>
-      <th data-k="ticker">Mynt</th><th data-k="h1">1 t</th><th data-k="d1">24 t ▼</th><th data-k="w1">7 d</th>
-      <th data-k="pris">Pris</th><th data-k="volum">Volum 24 t</th><th data-k="mcap">Markedsverdi</th>
-    </tr></thead>
-    <tbody id="marked"></tbody>
-  </table></div>
-</section>
-
-<footer>Data: Revolut (Norge, NOK), oppdatert ca. hvert 15. minutt av GitHub Actions. Dette er et analyseverktøy, ikke investeringsråd. Kryptovaluta kan falle like raskt som den stiger.</footer>
+  <section id="tab-senales" class="card">
+    <div class="row sp" style="margin-bottom:8px">
+      <input type="search" id="q" placeholder="Buscar moneda…" aria-label="Buscar moneda">
+      <label class="tg"><input type="checkbox" id="liq" checked> Solo líquidas</label>
+    </div>
+    <div class="tw"><table><thead><tr>
+      <th data-k="ticker">Moneda</th><th data-k="senal">Señal</th><th data-k="nota">Nota ▼</th><th data-k="pris">Precio</th>
+      <th data-k="h1">1 h</th><th data-k="d1">24 h</th><th data-k="w1">7 d</th><th data-k="rsi">RSI 4h</th>
+      <th data-k="rvol">Vol. rel.</th><th data-k="funding">Funding</th><th data-k="volum">Vol. 24 h</th><th data-k="fuente">Datos</th>
+    </tr></thead><tbody id="tb"></tbody></table></div>
+  </section>
+  <section id="tab-pos" class="card" hidden></section>
+  <section id="tab-fiab" class="card" hidden></section>
+  <section id="tab-met" class="card" hidden></section>
+  <p class="note">Herramienta de análisis técnico, no asesoramiento financiero. Las señales se basan en reglas y pueden fallar. Opera solo con dinero que puedas permitirte perder.</p>
 </main>
-
 <script>
 const $ = s => document.querySelector(s);
-let DATA = null, sortK = 'd1', sortOpp = false, aktivGraf = 'graf_1d', aktivMynt = null, aktivDetalj = null;
+const OWN = location.hostname.split('.')[0], REPO = location.pathname.split('/').filter(Boolean)[0] || 'revolut-krypto-varsel';
+const BASE = location.hostname.endsWith('github.io') ? `https://raw.githubusercontent.com/${OWN}/${REPO}/data/` : '';
+const ORDEN = {COMPRAR: 0, MANTENER: 1, ESPERAR: 2, NEUTRAL: 3, VENDER: 4, 'SIN DATOS': 5};
+let D = null, sortK = 'nota', asc = false, filtro = null, activa = null;
 
-const pst = v => v == null ? '–' : `<span class="${v >= 0 ? 'opp' : 'ned'}">${v >= 0 ? '+' : ''}${v.toFixed(1)} %</span>`;
-const kr = x => x == null ? '–' : x >= 1e9 ? (x/1e9).toFixed(1)+' mrd' : x >= 1e6 ? (x/1e6).toFixed(1)+' mill' : Math.round(x).toLocaleString('nb-NO');
-const pris = p => p == null ? '–' : p >= 1 ? p.toLocaleString('nb-NO',{maximumFractionDigits:2})+' kr' : Number(p).toPrecision(4)+' kr';
-const tid = t => new Date(t*1000).toLocaleString('nb-NO',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const esn = (x, d = 2) => x == null || isNaN(x) ? '–' : Math.abs(x) >= 1 ? x.toLocaleString('es-ES', {minimumFractionDigits: d, maximumFractionDigits: d}) : Number(x).toPrecision(4).replace('.', ',');
+const nok = x => x == null ? '–' : esn(x) + ' NOK';
+const big = x => x == null ? '–' : x >= 1e9 ? esn(x / 1e9, 1) + ' mil M' : x >= 1e6 ? esn(x / 1e6, 1) + ' M' : esn(x, 0);
+const pc = (x, d = 1) => x == null ? '<span class="mut">–</span>' : `<span class="${x >= 0 ? 'up' : 'dn'}">${x >= 0 ? '+' : ''}${esn(x, d)} %</span>`;
+const hora = t => new Date(t * 1000).toLocaleString('es-ES', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'});
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+const badge = s => `<span class="b ${String(s).split(' ')[0]}">${esc(s)}</span>`;
+const barra = n => n == null ? '' : `<span class="bar"><i style="${n >= 0 ? `left:50%;width:${n / 2}%;background:var(--up)` : `right:50%;width:${-n / 2}%;background:var(--dn)`}"></i></span>`;
 
-async function last() {
-  try {
-    const r = await fetch('data.json?t=' + Date.now());
-    DATA = await r.json();
-    const min = Math.round((Date.now()/1000 - DATA.oppdatert)/60);
-    $('#status').textContent = `${DATA.antall} mynter · oppdatert for ${min} min siden · varsel ved ≥ ${DATA.innstillinger.terskel_24t} % (24 t) eller ≥ ${DATA.innstillinger.terskel_1t} % (1 t)` + (DATA.kilde !== 'revolut' ? ' · reservekilde: CoinGecko' : '');
-    tegnVarsler(); tegnMarked();
-    const q = new URLSearchParams(location.search).get('mynt');
-    if (q && !aktivMynt) visMynt(q);
-  } catch (e) {
-    $('#status').textContent = 'Fant ingen data ennå. Første kjøring kommer innen 15 minutter.';
-  }
+async function cargar() {
+  try { D = await fetch(BASE + 'data.json?t=' + Date.now(), {cache: 'no-store'}).then(r => r.json()); }
+  catch (e) { $('#st').textContent = 'Aún no hay datos. Vuelve en unos minutos.'; return; }
+  const min = Math.round((Date.now() / 1000 - D.actualizado) / 60);
+  $('#st').innerHTML = `Actualizado hace ${min} min · cada 15 min` + (min > 40 ? ' · <b class="dn">datos atrasados</b>' : '');
+  regimen(); tiles(); tabla(); posiciones(); fiabilidad(); metodo();
+  const q = new URLSearchParams(location.search).get('moneda');
+  if (activa) abrir(activa, true); else if (q) abrir(q);
 }
 
-function tegnVarsler() {
-  const v = DATA.varsler || [];
-  $('#varsler').innerHTML = v.length ? v.map(a => `<tr data-t="${esc(a.ticker)}"><td><b>${esc(a.ticker)}</b></td><td>${tid(a.tid)}</td><td>${pst(a.h1)}</td><td>${pst(a.d1)}</td><td>${pst(a.w1)}</td><td>${pris(a.pris)}</td><td>${kr(a.volum)}</td></tr>`).join('')
-    : `<tr><td colspan="7" class="tom">Ingen varsler ennå. Når en mynt stiger over terskelen, dukker den opp her og på mobilen.</td></tr>`;
+function regimen() {
+  const r = D.regimen || {}, c = D.contexto || {}, fg = c.fear_greed;
+  const chip = (col, t) => `<span class="chip"><span class="dot" style="background:${col}"></span>${t}</span>`;
+  $('#reg').innerHTML = [
+    r.btc_sobre_ema200 == null ? '' : chip(r.btc_sobre_ema200 ? 'var(--up)' : 'var(--dn)', `BTC ${r.btc_sobre_ema200 ? 'sobre' : 'bajo'} la EMA200 diaria`),
+    fg ? chip(fg.valor >= 80 || fg.valor <= 20 ? 'var(--am)' : 'var(--mut)', `Fear & Greed ${fg.valor}`) : '',
+    c.dominancia != null ? chip('var(--acc)', `Dominancia BTC ${esn(c.dominancia, 1)} %` + (c.dominancia_7d != null ? ` (${c.dominancia_7d >= 0 ? '+' : ''}${esn(c.dominancia_7d, 1)} pp 7 d)` : '')) : '',
+    c.cambio_mcap_24h != null ? chip(c.cambio_mcap_24h >= 0 ? 'var(--up)' : 'var(--dn)', `Mercado 24 h ${c.cambio_mcap_24h >= 0 ? '+' : ''}${esn(c.cambio_mcap_24h, 1)} %`) : '',
+    D.usdnok ? chip('var(--mut)', `USD/NOK ${esn(D.usdnok, 2)}`) : '',
+  ].join('');
 }
 
-function tegnMarked() {
-  const q = $('#sok').value.trim().toUpperCase();
-  let m = DATA.marked.filter(x => !q || x.ticker.includes(q));
-  m.sort((a,b) => {
-    const x = a[sortK], y = b[sortK];
-    if (typeof x === 'string') return sortOpp ? x.localeCompare(y) : y.localeCompare(x);
-    return sortOpp ? (x ?? -1e18) - (y ?? -1e18) : (y ?? -1e18) - (x ?? -1e18);
+function tiles() {
+  const n = {};
+  D.filas.forEach(f => { n[f.senal] = (n[f.senal] || 0) + 1; });
+  $('#tiles').innerHTML = ['COMPRAR', 'MANTENER', 'ESPERAR', 'NEUTRAL', 'VENDER'].map(s =>
+    `<button class="tile" data-f="${s}" aria-pressed="${filtro === s}">${badge(s)}<b>${n[s] || 0}</b></button>`).join('');
+}
+
+function tabla() {
+  const q = $('#q').value.trim().toUpperCase(), liq = $('#liq').checked;
+  const f = D.filas.filter(x => (!q || x.ticker.includes(q)) && (!filtro || x.senal === filtro) && (!liq || x.liquida !== false || x.en_posicion));
+  f.sort((a, b) => {
+    let x = a[sortK], y = b[sortK];
+    if (sortK === 'senal') { x = ORDEN[x]; y = ORDEN[y]; }
+    if (typeof x === 'string' || typeof y === 'string') return asc ? String(x ?? '').localeCompare(y ?? '') : String(y ?? '').localeCompare(x ?? '');
+    x = x ?? -1e18; y = y ?? -1e18;
+    return asc ? x - y : y - x;
   });
-  $('#marked').innerHTML = m.slice(0, 400).map(a => `<tr data-t="${esc(a.ticker)}"><td><b>${esc(a.ticker)}</b></td><td>${pst(a.h1)}</td><td>${pst(a.d1)}</td><td>${pst(a.w1)}</td><td>${pris(a.pris)}</td><td>${kr(a.volum)}</td><td>${kr(a.mcap)}</td></tr>`).join('');
+  $('#tb').innerHTML = f.map(x => `<tr data-t="${esc(x.ticker)}">
+    <td><b>${esc(x.ticker)}</b>${x.en_posicion ? ' <span class="sm up" title="Posición abierta">●</span>' : ''}</td>
+    <td>${badge(x.senal)}</td><td>${x.nota ?? '–'}${barra(x.nota)}</td><td>${nok(x.pris)}</td>
+    <td>${pc(x.h1)}</td><td>${pc(x.d1)}</td><td>${pc(x.w1)}</td>
+    <td>${x.rsi == null ? '–' : esn(x.rsi, 0)}</td><td>${x.rvol == null ? '–' : esn(x.rvol, 1) + '×'}</td>
+    <td>${x.funding == null ? '–' : pc(x.funding, 0)}</td><td>${big(x.volum)}</td><td class="sm mut">${esc(x.fuente || '–')}</td></tr>`).join('')
+    || '<tr><td colspan="12" class="mut">Ninguna moneda con este filtro.</td></tr>';
 }
 
-function signaler(m, d) {
-  const s = [];
-  const vm = m.mcap ? m.volum / m.mcap : null;
-  if (m.mcap && m.mcap < 500e6) s.push(['r','!',`Lav markedsverdi (${kr(m.mcap)} kr). Små mynter er lette å pumpe opp og ned.`]);
-  else if (m.mcap && m.mcap < 5e9) s.push(['y','~',`Middels markedsverdi (${kr(m.mcap)} kr). Større svingninger enn de store myntene.`]);
-  else if (m.mcap) s.push(['g','✓',`Høy markedsverdi (${kr(m.mcap)} kr).`]);
-  if (vm != null) {
-    if (vm > 1) s.push(['r','!',`Volumet på 24 t er ${(vm*100).toFixed(0)} % av markedsverdien. Ekstrem omsetning, typisk ved pump eller nyhet. Sjekk hva som skjer.`]);
-    else if (vm > 0.2) s.push(['y','~',`Volum/markedsverdi ${(vm*100).toFixed(0)} %. Mye aktivitet, stigningen har reell omsetning bak seg.`]);
-    else s.push(['y','~',`Volum/markedsverdi bare ${(vm*100).toFixed(1)} %. Stigningen kan være tynt handlet.`]);
-  }
-  if (m.d1 != null && m.h1 != null && m.d1 > 20) {
-    if (m.h1 < -3) s.push(['r','!',`Faller siste time (${m.h1.toFixed(1)} %). Toppen kan allerede være passert.`]);
-    else if (m.h1 > 5) s.push(['y','~',`Stiger fortsatt kraftig siste time (+${m.h1.toFixed(1)} %). Høy risiko for å kjøpe nær toppen.`]);
-    else s.push(['g','✓',`Rolig siste time (${m.h1 >= 0 ? '+' : ''}${m.h1.toFixed(1)} %). Bevegelsen har stabilisert seg foreløpig.`]);
-  }
-  if (m.w1 != null && m.d1 != null && m.w1 > m.d1 * 2 && m.w1 > 60) s.push(['y','~',`Har steget ${m.w1.toFixed(0)} % på 7 dager. Dette er ikke starten på bevegelsen.`]);
-  const p = d?.graf_7d?.points;
-  if (p && p.length > 5) {
-    const r = p.map(x => +x.rate), lo = Math.min(...r), hi = Math.max(...r), na = r[r.length-1];
-    s.push([na >= hi*0.97 ? 'y' : 'g', na >= hi*0.97 ? '~' : 'i', `Pris er ${((na/lo-1)*100).toFixed(0)} % over bunnen og ${((1-na/hi)*100).toFixed(0)} % under toppen de siste 7 dagene.`]);
-  }
-  s.push(['y','?','Sjekk nyheter (børsnotering, partnerskap, token-opplåsing) før du bestemmer deg. Husk Revoluts kjøps-/salgsgebyr.']);
-  return s.map(([k,t,x]) => `<div class="signal ${k}"><span class="merke">${t}</span><span>${esc(x)}</span></div>`).join('');
+function grafica(g, nv, pos) {
+  if (!g || !g.c || g.c.length < 5) return '<p class="mut">Sin gráfica.</p>';
+  const W = 800, H = 240, P = 6, n = g.c.length;
+  const lv = [nv?.stop, nv?.t1, nv?.t2, pos?.entrada].filter(x => x);
+  const all = g.c.concat(g.ema20.filter(x => x), g.ema50.filter(x => x), lv);
+  const lo = Math.min(...all), hi = Math.max(...all);
+  const X = i => P + i / (n - 1) * (W - 2 * P), Y = v => H - P - (v - lo) / ((hi - lo) || 1) * (H - 2 * P);
+  const ruta = a => a.map((v, i) => v == null ? '' : `${(i && a[i - 1] != null) ? 'L' : 'M'}${X(i).toFixed(1)} ${Y(v).toFixed(1)}`).join(' ');
+  const linea = (v, col, t) => v ? `<line x1="${P}" x2="${W - P}" y1="${Y(v)}" y2="${Y(v)}" stroke="${col}" stroke-dasharray="5 5" vector-effect="non-scaling-stroke"/><text x="${W - P - 2}" y="${Y(v) - 4}" text-anchor="end" font-size="12" fill="${col}">${t}</text>` : '';
+  return `<svg class="ch" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Gráfica de 4 horas">
+    <path d="${ruta(g.ema50)}" fill="none" stroke="var(--am)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
+    <path d="${ruta(g.ema20)}" fill="none" stroke="var(--acc)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
+    <path d="${ruta(g.c)}" fill="none" stroke="var(--tx)" stroke-width="2" vector-effect="non-scaling-stroke"/>
+    ${linea(nv?.stop, 'var(--dn)', 'stop')}${linea(nv?.t1, 'var(--up)', 'T1')}${linea(nv?.t2, 'var(--up)', 'T2')}${linea(pos?.entrada, 'var(--mut)', 'entrada')}
+  </svg><div class="row sm mut"><span>— Precio 4 h</span><span style="color:var(--acc)">— EMA20</span><span style="color:var(--am)">— EMA50</span><span>${hora(g.t[0] / 1000)} → ${hora(g.t[g.t.length - 1] / 1000)}</span></div>`;
 }
 
-function tegnGraf() {
-  const g = aktivDetalj?.[aktivGraf];
-  if (!g?.points?.length) { $('#graf').innerHTML = '<p class="tom">Graf lagres bare for mynter som har utløst et varsel. Åpne Revolut-lenken for full graf.</p>'; return; }
-  const p = g.points.map(x => [x.start, +x.rate]), W = 800, H = 220, pad = 8;
-  const xs = p.map(a=>a[0]), ys = p.map(a=>a[1]);
-  const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
-  const X = x => pad + (x-x0)/(x1-x0||1)*(W-2*pad), Y = y => H-pad - (y-y0)/(y1-y0||1)*(H-2*pad);
-  const d = p.map((a,i) => (i?'L':'M') + X(a[0]).toFixed(1) + ' ' + Y(a[1]).toFixed(1)).join(' ');
-  const farge = ys[ys.length-1] >= ys[0] ? 'var(--opp)' : 'var(--ned)';
-  $('#graf').innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Prisgraf">
-    <path d="${d} L ${X(x1)} ${H} L ${X(x0)} ${H} Z" fill="${farge}" opacity=".08"/>
-    <path d="${d}" fill="none" stroke="${farge}" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>
-    <div class="meta">Lav ${pris(y0)} · Høy ${pris(y1)} · Endring ${esc(g.percentageChange || '')} · lagret ${tid(aktivDetalj.oppdatert)}</div>`;
+const EXPLICA = {
+  COMPRAR: 'Confluencia alcista confirmada. Si entras, hazlo con el stop y el tamaño indicados.',
+  MANTENER: 'Hay una compra activa y la tendencia sigue en pie. Mantén y respeta el stop (sube solo).',
+  ESPERAR: 'La estructura es alcista pero el precio está demasiado estirado. Espera un retroceso hacia la EMA20.',
+  NEUTRAL: 'Sin ventaja clara. Mejor fuera; si la tienes, vigila tu stop.',
+  VENDER: 'Estructura bajista. No compres; si la tienes, plantéate vender o reducir.',
+  'SIN DATOS': 'Ninguna fuente da velas suficientes para analizarla.'
+};
+const FONDO = {COMPRAR: 'var(--gbg)', VENDER: 'var(--rbg)', ESPERAR: 'var(--ybg)', MANTENER: 'var(--bbg)'};
+
+async function abrir(t, silencioso) {
+  const f = D.filas.find(x => x.ticker === t);
+  if (!f) return;
+  let d = null;
+  try { d = await fetch(`${BASE}monedas/${encodeURIComponent(t)}.json?t=${Date.now()}`, {cache: 'no-store'}).then(r => r.ok ? r.json() : null); } catch (e) {}
+  activa = t;
+  history.replaceState(null, '', '?moneda=' + encodeURIComponent(t));
+  const nv = d?.niveles || {}, p = d?.posicion, s = f.senal, bt = d?.backtest;
+  const pil = d?.pilares ? Object.entries(d.pilares).map(([k, v]) => `<div class="pil">
+      <div><span class="n">${esc(v.nombre)}</span> <span class="sm mut">×${String(v.peso).replace('.', ',')}</span>
+        <div class="meter"><i style="${v.v == null ? '' : v.v >= 0 ? `width:${v.v * 25}%;background:var(--up)` : `left:${50 + v.v * 25}%;width:${-v.v * 25}%;background:var(--dn)`}"></i></div></div>
+      <div><b class="${v.v > 0 ? 'up' : v.v < 0 ? 'dn' : 'mut'}">${v.v == null ? '–' : (v.v > 0 ? '+' : '') + String(v.v).replace('.', ',')}</b></div>
+      <div class="x">${esc(v.texto)}</div></div>`).join('') : '';
+  $('#det').innerHTML = `
+    <div class="row sp"><div><p class="big">${esc(t)}</p><div class="mut">${nok(f.pris)} · 24 h ${pc(f.d1)} · 7 d ${pc(f.w1)}</div></div>
+      <button class="btn" id="cerrar">Cerrar ✕</button></div>
+    <div class="sig" style="background:${FONDO[s] || 'var(--nbg)'}">
+      <div class="row sp"><div><div class="l">Señal</div><div class="v">${esc(s)}</div></div>
+      <div style="text-align:right"><div class="l">Nota</div><div class="v">${f.nota ?? '–'}<span class="sm">/100</span></div></div></div>
+      <div>${esc(EXPLICA[s] || '')}</div>
+      ${(d?.motivo || []).length ? `<div class="sm" style="margin-top:6px">${d.motivo.map(esc).join(' ')}</div>` : ''}
+    </div>
+    ${p ? `<div class="warn">Posición virtual abierta el ${hora(p.t)} a ${nok(p.entrada)} · ahora ${pc((p.ret_actual || 0) * 100)} · stop ${nok(p.stop)}${p.t1_alcanzado ? ' · T1 alcanzado' : ''}</div>` : ''}
+    ${nv.entrada ? `<h3>Niveles en NOK (precio Revolut)</h3><div class="grid">
+      <div class="kv"><span>Entrada</span><b>${nok(p ? p.entrada : nv.entrada)}</b></div>
+      <div class="kv"><span>Stop-loss</span><b class="dn">${nok(p ? p.stop : nv.stop)}</b></div>
+      <div class="kv"><span>Objetivo 1 (1,5R)</span><b class="up">${nok(p ? p.t1 : nv.t1)}</b></div>
+      <div class="kv"><span>Objetivo 2 (3R)</span><b class="up">${nok(p ? p.t2 : nv.t2)}</b></div>
+      <div class="kv"><span>Riesgo hasta el stop</span><b>${esn(nv.riesgo_pct * 100, 1)} %</b></div>
+      <div class="kv"><span>Tamaño máx. (riesgo 1 %)</span><b>${nv.tamano_max ? esn(Math.min(100, nv.tamano_max * 100), 0) + ' % del capital' : '–'}</b></div>
+      <div class="kv"><span>Volatilidad (ATR 4 h)</span><b>${esn(nv.atr_pct * 100, 1)} %</b></div>
+      <div class="kv"><span>Extensión sobre EMA20</span><b>${f.ext == null ? '–' : esn(f.ext, 1) + ' ATR'}</b></div>
+    </div>` : ''}
+    <h3>Gráfica 4 h</h3>${grafica(d?.grafica, nv.entrada ? (p ? p : nv) : null, p)}
+    <h3>Por qué: los 7 pilares</h3>${pil || '<p class="mut">Sin detalle.</p>'}
+    <h3>Validación de fuentes</h3><div class="grid">
+      <div class="kv"><span>Velas</span><b>${esc(d?.fuente || f.fuente || '–')}</b></div>
+      <div class="kv"><span>Desvío frente a Revolut</span><b>${d?.desviacion == null ? '–' : pc(d.desviacion * 100, 2)}</b></div>
+      <div class="kv"><span>Funding (Hyperliquid)</span><b>${d?.derivados ? pc(d.derivados.funding_anual, 0) + ' anual' : 'sin perpetuo'}</b></div>
+      <div class="kv"><span>Interés abierto 24 h</span><b>${d?.derivados?.oi_24h == null ? '–' : pc(d.derivados.oi_24h, 0)}</b></div>
+    </div>
+    <h3>Backtest de la estrategia en ${esc(t)}</h3>
+    ${bt && bt.operaciones ? `<div class="grid">
+      <div class="kv"><span>Operaciones</span><b>${bt.operaciones}</b></div>
+      <div class="kv"><span>Aciertos</span><b>${esn(bt.aciertos * 100, 0)} %</b></div>
+      <div class="kv"><span>Media por operación</span><b>${pc(bt.media * 100, 2)}</b></div>
+      <div class="kv"><span>Profit factor</span><b>${bt.profit_factor == null ? '–' : esn(bt.profit_factor, 2)}</b></div>
+      <div class="kv"><span>Estrategia / comprar y mantener</span><b>${pc(bt.compuesto * 100, 0)} / ${pc(bt.comprar_y_mantener * 100, 0)}</b></div>
+    </div><p class="note">Velas de 4 h cerradas, comisiones de Revolut X incluidas. Con menos de 10 operaciones el resultado no es fiable.</p>`
+    : '<p class="mut">Sin backtest para esta moneda (poco historial o sin velas de exchange).</p>'}
+    <div class="row" style="margin-top:12px">
+      <a class="btn" target="_blank" rel="noopener" href="https://www.revolut.com/es-ES/crypto/price/${t.toLowerCase()}/">Revolut ↗</a>
+      <a class="btn" target="_blank" rel="noopener" href="https://www.tradingview.com/chart/?symbol=${d?.fuente === 'OKX' ? 'OKX' : 'BINANCE'}:${t}USDT">TradingView ↗</a>
+      <a class="btn" target="_blank" rel="noopener" href="https://www.coingecko.com/en/search?query=${t.toLowerCase()}">CoinGecko ↗</a>
+      <a class="btn" target="_blank" rel="noopener" href="https://news.google.com/search?q=${encodeURIComponent(t + ' crypto')}&hl=es">Noticias ↗</a>
+    </div>`;
+  $('#det').classList.add('on');
+  $('#cerrar').onclick = () => { $('#det').classList.remove('on'); activa = null; history.replaceState(null, '', location.pathname); };
+  if (!silencioso) $('#det').scrollIntoView({behavior: 'smooth', block: 'start'});
 }
 
-async function visMynt(t) {
-  const m = DATA.marked.find(x => x.ticker === t);
-  if (!m) return;
-  aktivMynt = t; aktivDetalj = null;
-  try { const r = await fetch(`mynter/${encodeURIComponent(t)}.json?t=${Date.now()}`); if (r.ok) aktivDetalj = await r.json(); } catch {}
-  $('#d-navn').textContent = t;
-  $('#d-pris').innerHTML = `${pris(m.pris)} · 24 t ${pst(m.d1)}`;
-  $('#d-tall').innerHTML = [['1 time',pst(m.h1)],['24 timer',pst(m.d1)],['7 dager',pst(m.w1)],['Volum 24 t',kr(m.volum)+' kr'],['Markedsverdi',kr(m.mcap)+' kr']]
-    .map(([a,b]) => `<div class="tall"><span>${a}</span><b>${b}</b></div>`).join('');
-  $('#d-signal').innerHTML = signaler(m, aktivDetalj);
-  $('#d-beskr').textContent = aktivDetalj?.detaljer?.description || '';
-  const slug = t.toLowerCase();
-  $('#d-lenker').innerHTML = `<a class="knapp" target="_blank" rel="noopener" href="https://www.revolut.com/en-NO/crypto/price/${slug}/">Revolut ↗</a>
-    <a class="knapp" target="_blank" rel="noopener" href="https://www.coingecko.com/en/search?query=${slug}">CoinGecko ↗</a>
-    <a class="knapp" target="_blank" rel="noopener" href="https://news.google.com/search?q=${encodeURIComponent(t+' crypto')}&hl=nb">Nyheter ↗</a>` +
-    (aktivDetalj?.detaljer?.website ? `<a class="knapp" target="_blank" rel="noopener" href="${esc(aktivDetalj.detaljer.website)}">Nettside ↗</a>` : '');
-  tegnGraf();
-  $('#detalj').classList.add('vis');
-  $('#detalj').scrollIntoView({behavior:'smooth'});
-  history.replaceState(null, '', '?mynt=' + encodeURIComponent(t));
+function posiciones() {
+  const ab = D.posiciones || [], ce = D.cerradas || [], r = D.resultado_real || {};
+  $('#tab-pos').innerHTML = `<h2>Posiciones virtuales abiertas</h2>
+    <p class="note" style="margin-top:0">Cada COMPRAR confirmado abre una posición virtual al precio de Revolut; se cierra con VENDER o al tocar el stop. Así se mide si las señales funcionan de verdad.</p>
+    <div class="tw"><table><thead><tr><th>Moneda</th><th>Abierta</th><th>Entrada</th><th>Stop</th><th>T1</th><th>Resultado</th></tr></thead><tbody>
+    ${ab.map(p => `<tr data-t="${esc(p.ticker)}"><td><b>${esc(p.ticker)}</b></td><td>${hora(p.t)}</td><td>${nok(p.entrada)}</td><td>${nok(p.stop)}</td><td>${nok(p.t1)}${p.t1_alcanzado ? ' ✓' : ''}</td><td>${pc((p.ret_actual || 0) * 100)}</td></tr>`).join('') || '<tr><td colspan="6" class="mut">Ninguna posición abierta.</td></tr>'}
+    </tbody></table></div>
+    <h2 style="margin-top:18px">Resultados reales de las señales</h2>
+    <div class="grid">
+      <div class="kv"><span>Operaciones cerradas</span><b>${r.operaciones || 0}</b></div>
+      <div class="kv"><span>Aciertos</span><b>${r.aciertos == null ? '–' : esn(r.aciertos * 100, 0) + ' %'}</b></div>
+      <div class="kv"><span>Media por operación</span><b>${r.media == null ? '–' : pc(r.media * 100, 2)}</b></div>
+      <div class="kv"><span>Profit factor</span><b>${r.profit_factor == null ? '–' : esn(r.profit_factor, 2)}</b></div>
+    </div>
+    <div class="tw" style="margin-top:10px"><table><thead><tr><th>Moneda</th><th>Entrada</th><th>Salida</th><th>Motivo</th><th>Neto</th></tr></thead><tbody>
+    ${ce.map(p => `<tr data-t="${esc(p.ticker)}"><td><b>${esc(p.ticker)}</b></td><td>${hora(p.t)} · ${nok(p.entrada)}</td><td>${hora(p.t_salida)} · ${nok(p.salida)}</td><td>${esc(p.motivo)}</td><td>${pc(p.ret * 100, 2)}</td></tr>`).join('') || '<tr><td colspan="5" class="mut">Aún no hay operaciones cerradas.</td></tr>'}
+    </tbody></table></div>
+    <p class="note">Neto con comisiones de Revolut X (0,09 % por operación). En la app normal de Revolut la comisión es ≈1,49 % por operación (plan Standard).</p>`;
+}
+
+function fiabilidad() {
+  const b = D.backtest || {};
+  $('#tab-fiab').innerHTML = `<h2>Backtest de la estrategia</h2>
+    <p class="note" style="margin-top:0">Reglas aplicadas a las velas de 4 h (~80 días) de cada moneda con datos de exchange. Calculado el ${esc(D.backtest_dia || '–')}. Sin régimen de mercado ni derivados (no hay historial gratuito).</p>
+    ${b.operaciones ? `<div class="grid">
+      <div class="kv"><span>Monedas analizadas</span><b>${b.monedas}</b></div>
+      <div class="kv"><span>Operaciones</span><b>${b.operaciones}</b></div>
+      <div class="kv"><span>Aciertos</span><b>${esn(b.aciertos * 100, 0)} %</b></div>
+      <div class="kv"><span>Media por operación (neta)</span><b>${pc(b.media * 100, 2)}</b></div>
+      <div class="kv"><span>Profit factor (mediana)</span><b>${b.profit_factor_mediana == null ? '–' : esn(b.profit_factor_mediana, 2)}</b></div>
+      <div class="kv"><span>Monedas con resultado positivo</span><b>${esn(b.monedas_rentables * 100, 0)} %</b></div>
+      <div class="kv"><span>Baten a comprar y mantener</span><b>${esn(b.supera_comprar_y_mantener * 100, 0)} %</b></div>
+    </div>
+    <div class="warn" style="margin-top:12px">Cómo leerlo: en una estrategia de tendencia es normal acertar menos del 50 % si las ganancias superan a las pérdidas. Lo que importa es que la <b>media por operación sea positiva</b> y el <b>profit factor supere 1,3</b>. Si no, la estrategia no tiene ventaja en este periodo.</div>`
+    : '<p class="mut">El backtest se calcula una vez al día. Aún no hay resultados.</p>'}`;
+}
+
+function metodo() {
+  const f = D.fuentes || {}, fv = D.fuentes_velas || {}, pa = D.parametros || {};
+  $('#tab-met').innerHTML = `<h2>Cómo decide</h2>
+    <p>Cada 15 minutos se analizan todas las criptos de Revolut. La señal usa <b>velas de 4 h cerradas</b> con un filtro de tendencia diario; el precio en vivo se usa para stops, objetivos y resultados. Siete pilares puntúan de −2 a +2 y forman una nota de −100 a +100:</p>
+    <ol>
+      <li><b>Tendencia diaria</b>: cierre frente a la EMA200 y cruce EMA50/EMA200. Con ADX &lt; 18 (mercado lateral) pesa la mitad.</li>
+      <li><b>Tendencia 4 h</b>: precio y EMA20 frente a la EMA50.</li>
+      <li><b>Momento</b>: MACD (signo y aceleración) y RSI; penaliza la sobrecompra (&gt; 78).</li>
+      <li><b>Volumen y flujo</b>: rupturas del máximo de 20 velas con volumen ≥ 1,5× la media y divergencias del OBV.</li>
+      <li><b>Fuerza relativa</b>: rentabilidad de 7 días frente a BTC.</li>
+      <li><b>Régimen de mercado</b>: BTC frente a su EMA200, Fear & Greed y dominancia de BTC.</li>
+      <li><b>Derivados</b>: funding e interés abierto en Hyperliquid (apalancamiento, squeezes).</li>
+    </ol>
+    <p><b>COMPRAR</b>: nota ≥ ${pa.umbral_compra} (≥ 60 si el mercado es bajista), tendencia de 4 h alcista, diaria no bajista, precio a menos de 3 ATR de la EMA20, liquidez suficiente y confirmación en ${pa.confirmaciones} revisiones seguidas.
+    <b>VENDER</b>: nota ≤ ${pa.umbral_venta}, tendencia y momento de 4 h a la baja, o precio bajo el stop.
+    <b>Stop</b>: 2 ATR bajo la entrada (o bajo el mínimo reciente) y luego trailing de 3 ATR desde el máximo. <b>Tamaño</b>: arriesgar como máximo el 1 % del capital por operación.</p>
+    <h2 style="margin-top:16px">Estado de las fuentes</h2>
+    <div class="tw"><table><tbody>${Object.entries(f).map(([k, v]) => `<tr><td><b>${esc(k)}</b></td><td style="text-align:left" class="${String(v).startsWith('OK') ? 'up' : 'dn'}">${esc(v)}</td></tr>`).join('')}
+    <tr><td><b>Velas usadas</b></td><td style="text-align:left">${Object.entries(fv).map(([k, v]) => `${esc(k)}: ${v}`).join(' · ')}</td></tr></tbody></table></div>
+    <p class="note">Las velas de Binance/OKX solo se aceptan si su precio en NOK difiere menos de un 4 % del de Revolut. Sin volumen (fuente Revolut) el pilar de volumen queda vacío. Último análisis: ${D.duracion_s ?? '–'} s.</p>
+    <div class="warn">Comisiones: la app normal de Revolut cobra ≈1,49 % por operación (≈3 % ida y vuelta, plan Standard), lo que se come casi cualquier operación de corto plazo. <b>Revolut X</b> cobra 0 % (maker) / 0,09 % (taker). Para este tipo de trading, usa Revolut X.</div>`;
 }
 
 document.addEventListener('click', e => {
-  const tr = e.target.closest('tbody tr[data-t]'); if (tr) return visMynt(tr.dataset.t);
+  const tr = e.target.closest('tbody tr[data-t]'); if (tr) return abrir(tr.dataset.t);
   const th = e.target.closest('th[data-k]');
-  if (th) { const k = th.dataset.k; sortOpp = sortK === k ? !sortOpp : k === 'ticker'; sortK = k;
+  if (th) { const k = th.dataset.k; asc = sortK === k ? !asc : k === 'ticker'; sortK = k;
     document.querySelectorAll('th[data-k]').forEach(h => h.textContent = h.textContent.replace(/ [▲▼]$/, ''));
-    th.textContent += sortOpp ? ' ▲' : ' ▼'; tegnMarked(); }
-  const gb = e.target.closest('#graf-valg button');
-  if (gb) { aktivGraf = gb.dataset.g; document.querySelectorAll('#graf-valg button').forEach(b => b.setAttribute('aria-pressed', b === gb)); tegnGraf(); }
+    th.textContent += asc ? ' ▲' : ' ▼'; return tabla(); }
+  const ti = e.target.closest('.tile'); if (ti) { filtro = filtro === ti.dataset.f ? null : ti.dataset.f; tiles(); tabla(); return; }
+  const tb = e.target.closest('[role=tab]');
+  if (tb) document.querySelectorAll('[role=tab]').forEach(b => { b.setAttribute('aria-selected', b === tb); $('#tab-' + b.dataset.tab).hidden = b !== tb; });
 });
-$('#lukk').onclick = () => { $('#detalj').classList.remove('vis'); aktivMynt = null; history.replaceState(null,'',location.pathname); };
-$('#sok').oninput = () => DATA && tegnMarked();
-last(); setInterval(last, 5*60*1000);
+$('#q').oninput = () => D && tabla();
+$('#liq').onchange = () => D && tabla();
+cargar(); setInterval(cargar, 5 * 60 * 1000);
 </script>
 </body>
 </html>
