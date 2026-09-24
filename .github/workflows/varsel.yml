@@ -57,7 +57,7 @@ jobs:
       - name: Recuperar datos (rama data)
         run: |
           git clone -q --depth 1 -b data "https://github.com/${GITHUB_REPOSITORY}.git" data || mkdir -p data
-          rm -rf data/.git data/mynter data/state/status.json
+          rm -rf data/.git data/mynter data/state/status.json data/state/estado.json data/data.json data/monedas data/backtest.json
 
       - name: Notificación de prueba
         if: ${{ inputs.test }}
@@ -69,7 +69,8 @@ jobs:
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           PANEL_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
-          MIN_VOLUM_NOK: ${{ vars.MIN_VOLUM_NOK || '5000000' }}
+          MIN_VOL_USD: ${{ vars.MIN_VOL_USD || '100000' }}
+          MAX_SPREAD: ${{ vars.MAX_SPREAD || '0.006' }}
           DATA_DIR: data
           CACHE_DIR: cache
           GH_TOKEN: ${{ github.token }}
