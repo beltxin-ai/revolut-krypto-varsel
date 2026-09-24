@@ -1,0 +1,74 @@
+name: Kryptovarsel
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"   # hvert 15. minutt (GitHub kan forsinke kjøringen noen minutter)
+  workflow_dispatch:
+    inputs:
+      test:
+        description: "Send testvarsel til mobilen"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: kryptovarsel
+  cancel-in-progress: false
+
+jobs:
+  sjekk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.pages.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Hent lagret status
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            state
+            docs/mynter
+          key: status-${{ github.run_id }}
+          restore-keys: status-
+
+      - name: Testvarsel
+        if: ${{ inputs.test }}
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: python varsel.py --test
+
+      - name: Sjekk kurser og varsle
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          PANEL_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+          TERSKEL_24T: ${{ vars.TERSKEL_24T || '20' }}
+          TERSKEL_1T: ${{ vars.TERSKEL_1T || '20' }}
+          MIN_VOLUM_NOK: ${{ vars.MIN_VOLUM_NOK || '1000000' }}
+        run: python varsel.py
+
+      - name: Lagre status
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            state
+            docs/mynter
+          key: status-${{ github.run_id }}
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+      - id: pages
+        uses: actions/deploy-pages@v4
