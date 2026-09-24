@@ -166,6 +166,10 @@ def main():
     ahora_ms = int(t0 * 1000)
     est = cargar(DATA_DIR / "state" / "cartera.json", None) or {
         "caja": 1.0, "nucleo": {}, "satelite": {}, "cerradas": [], "curva": [], "ult_dia": None, "inicio": int(t0)}
+    if not est.get("senales"):     # posiciones abiertas antes de existir el historial de señales
+        est["senales"] = [{"t": p["t"], "dia": est.get("ult_dia"), "tipo": "entrada", "ticker": p["ticker"],
+                           "sistema": p.get("sistema"), "precio": p["entrada"], "stop": p.get("stop"), "peso": p.get("peso")}
+                          for b in ("nucleo", "satelite") for p in est[b].values()]
     fuentes = {}
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     try:
@@ -264,7 +268,16 @@ def main():
         if rx.get(t):
             p["ultimo"] = rx[t]["bid"]
 
-    # ---- 3) notificaciones
+    # ---- 3) historial de señales y latidos (prueba de que la revisión se ejecuta)
+    for tipo, p in eventos:
+        est.setdefault("senales", []).insert(0, {
+            "t": int(t0), "dia": dia, "tipo": tipo, "ticker": p["ticker"], "sistema": p.get("sistema"),
+            "precio": p["entrada"] if tipo == "entrada" else p.get("salida"), "stop": p.get("stop"),
+            "peso": p.get("peso"), "motivo": p.get("motivo"), "ret": p.get("ret")})
+    est["senales"] = est.get("senales", [])[:60]
+    est["latidos"] = ([int(t0)] + est.get("latidos", []))[:96]    # últimas 24 h a 15 min
+
+    # ---- 4) notificaciones
     equity = valorar(est, rx)
     for tipo, p in eventos:
         t = p["ticker"]
@@ -283,13 +296,16 @@ def main():
                    f"Resultado neto: {'+' if p['ret'] >= 0 else ''}{fmt(p['ret'] * 100, 1)} %",
                    click=enlace(t), tags="red_circle", prioridad=5 if tipo == "stop" else 4)
 
-    # ---- 4) datos para el panel
+    # ---- 5) datos para el panel
     filas = []
+    libres = sis.MAX_SATELITE - len(est["satelite"])
     for t in sorted(datos):
         e = sis.estado_moneda(datos[t], series[t])
         q = rx.get(t, {})
+        rec = sis.recomendacion(t, datos[t], series[t], q.get("mid"), est["nucleo"].get(t) or est["satelite"].get(t),
+                                reg["alcista"], libres)
         filas.append({"ticker": t, "precio": q.get("mid"), "spread": q.get("spread"), "vol_usd": q.get("vol_usd"),
-                      "cambio_24h": q.get("cambio_24h"), **e,
+                      "cambio_24h": q.get("cambio_24h"), **e, "rec": rec,
                       "nucleo": t in sis.NUCLEO,
                       "en_cartera": t in est["nucleo"] or t in est["satelite"],
                       "grafica": {"t": datos[t]["t"][-120:], "c": datos[t]["c"][-120:],
@@ -324,6 +340,7 @@ def main():
                     "caja": est["caja"], "resumen": resumen, "curva": curva, "cerradas": est["cerradas"][:100]},
         "candidatas_hoy": candidatas[:10], "cerca_de_ruptura": cerca[:15],
         "eventos": [{"tipo": tp, "ticker": p["ticker"]} for tp, p in eventos],
+        "senales": est["senales"][:30], "latidos": est["latidos"], "intervalo_s": int(os.getenv("INTERVALO_SEG", "900")),
         "filas": filas,
         "sistema": {"peso_nucleo": sis.PESO_NUCLEO, "peso_satelite": sis.PESO_SATELITE, "max_satelite": sis.MAX_SATELITE,
                     "entrada": sis.ENTRADA_N, "salida": sis.SALIDA_N, "stop_atr": sis.STOP_ATR, "trail_atr": sis.TRAIL_ATR},
