@@ -1,0 +1,27 @@
+name: Investigación de estrategias
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  investigar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Ejecutar investigación
+        run: python investigacion.py
+      - name: Publicar resultados (rama investigacion)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p out && cp resultados.json out/
+          cd out && git init -q -b investigacion && git add -A \
+            && git -c user.name="radar" -c user.email="actions@users.noreply.github.com" commit -qm "resultados $(date -u +%FT%TZ)" \
+            && git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" investigacion
