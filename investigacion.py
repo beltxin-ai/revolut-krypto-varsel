@@ -143,13 +143,16 @@ def simular(nombre, datos, tickers, btc, coste, regla, K, desde, hasta):
     """regla(dia_i, fecha, contexto) -> (lista de (ticker, stop) a comprar, set de tickers a vender).
     Señales al cierre del día i; ejecución a la apertura del día i+1."""
     fechas, idx = alinear(datos, tickers)
-    fechas = [x for x in fechas if desde <= x <= hasta]
+    cal = set(datos["BTC"]["t"])
+    fechas = [x for x in fechas if desde <= x <= hasta and x in cal]
+    dias_curva = []
     car = Cartera(K, coste)
     for n, fecha in enumerate(fechas[:-1]):
         sig = fechas[n + 1]
         cierres = {tk: datos[tk]["c"][idx[tk][fecha]] for tk in tickers if fecha in idx[tk]}
         eq = car.valor(cierres)
         car.curva.append(eq)
+        dias_curva.append(fecha)
         car.exp.append(len(car.pos) / K)
         # stops intradía del día siguiente (se comprueban con el mínimo del día siguiente)
         comprar, vender = regla(fecha, idx, car, cierres)
@@ -170,8 +173,13 @@ def simular(nombre, datos, tickers, btc, coste, regla, K, desde, hasta):
             if p["stop"] and datos[tk]["l"][j] <= p["stop"]:
                 salida = min(datos[tk]["o"][j], p["stop"])
                 car.vender(tk, salida)
+    por_ano = {}
+    for fch, val in zip(dias_curva, car.curva):
+        y = time.strftime("%Y", time.gmtime(fch / 1000))
+        por_ano.setdefault(y, [val, val])[1] = val
     return {"nombre": nombre, **metricas(car.curva), **stats_ops(car.ops),
-            "exposicion": mean(car.exp) if car.exp else 0}
+            "exposicion": mean(car.exp) if car.exp else 0,
+            "por_ano": {y: v[1] / v[0] - 1 for y, v in por_ano.items()}}
 
 
 # ------------------------------------------------------------------ estrategias diarias
@@ -318,8 +326,9 @@ def main():
     datos, coste = {}, {}
     for tk, spread in candidatos:
         try:
-            v = velas_binance(f"{tk}USDT", "1d", 1000)
-            if len(v["c"]) >= 260:
+            v = velas_binance(f"{tk}USDT", "1d", 2000)
+            reciente = v["ct"] and v["ct"][-1] > (time.time() - 3 * 86400) * 1000
+            if len(v["c"]) >= 260 and reciente:
                 datos[tk] = v
                 coste[tk] = COMISION + spread / 2 + DESLIZ
         except Exception as e:  # noqa: BLE001
@@ -328,7 +337,7 @@ def main():
     log(f"Con historia suficiente: {len(tickers)}")
     S = prep_diario(datos, tickers)
 
-    todas = sorted({t for tk in tickers for t in datos[tk]["t"]})
+    todas = list(datos["BTC"]["t"])          # calendario = días con dato de BTC
     inicio = todas[210]                      # deja calentar SMA200
     corte = todas[210 + int((len(todas) - 210) * 0.6)]
     fin = todas[-1]
