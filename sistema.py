@@ -83,3 +83,46 @@ def actualizar_trailing(pos, v, s):
 def salida_diaria(pos, v, s):
     mn = s["min20"][-1]
     return bool(mn and v["c"][-1] < mn)
+
+
+def niveles_vivos(v):
+    """Niveles que decidirán el PRÓXIMO cierre (incluyen la última vela cerrada)."""
+    return {"ruptura": max(v["h"][-ENTRADA_N:]), "salida": min(v["l"][-SALIDA_N:])}
+
+
+def recomendacion(t, v, s, precio, pos, alcista, libres):
+    """Acción concreta para una moneda con el precio en vivo de Revolut X.
+
+    accion: MANTENER · VENDER? (alerta) · POSIBLE COMPRA · VIGILAR · NO COMPRAR · SIN HUECO
+    La compra/venta real solo se confirma con el cierre diario; esto indica qué esperar.
+    """
+    if not precio:
+        return None
+    nv = niveles_vivos(v)
+    s50, s200 = s["sma50"][-1], s["sma200"][-1]
+    d = lambda x: (precio / x - 1) if x else None  # noqa: E731
+    if t in NUCLEO:
+        if pos:
+            if s50 and precio < s50:
+                return {"accion": "ALERTA", "texto": "Bajo la SMA50: si cierra por debajo, se vende al cierre", "nivel": s50, "dist": d(s50)}
+            return {"accion": "MANTENER", "texto": "Tendencia intacta. Sale si cierra bajo la SMA50", "nivel": s50, "dist": d(s50)}
+        if s50 and s200 and precio > s50 and s50 > s200:
+            return {"accion": "POSIBLE COMPRA", "texto": "Cumple la tendencia en vivo; se confirma al cierre", "nivel": s50, "dist": d(s50)}
+        return {"accion": "NO COMPRAR", "texto": "Sin tendencia (necesita cierre > SMA50 y SMA50 > SMA200)", "nivel": s50, "dist": d(s50)}
+    if pos:
+        st = pos.get("stop")
+        if st and precio <= st * 1.03:
+            return {"accion": "ALERTA", "texto": "A menos de un 3 % del stop", "nivel": st, "dist": d(st)}
+        if precio < nv["salida"]:
+            return {"accion": "ALERTA", "texto": "Bajo el mínimo de 20 días: si cierra así, se vende", "nivel": nv["salida"], "dist": d(nv["salida"])}
+        return {"accion": "MANTENER", "texto": "Stop dinámico activo", "nivel": st, "dist": d(st) if st else None}
+    if not alcista:
+        return {"accion": "NO COMPRAR", "texto": "Régimen bajista: no se abren altcoins", "nivel": nv["ruptura"], "dist": d(nv["ruptura"])}
+    if precio > nv["ruptura"]:
+        if libres <= 0:
+            return {"accion": "SIN HUECO", "texto": "Rompe, pero el satélite está lleno", "nivel": nv["ruptura"], "dist": d(nv["ruptura"])}
+        return {"accion": "POSIBLE COMPRA", "texto": "Rompe en vivo el máximo de 55 días; se confirma si cierra por encima",
+                "nivel": nv["ruptura"], "dist": d(nv["ruptura"])}
+    if precio >= nv["ruptura"] * 0.95:
+        return {"accion": "VIGILAR", "texto": "Cerca del máximo de 55 días", "nivel": nv["ruptura"], "dist": d(nv["ruptura"])}
+    return {"accion": "NO COMPRAR", "texto": "Sin ruptura", "nivel": nv["ruptura"], "dist": d(nv["ruptura"])}
