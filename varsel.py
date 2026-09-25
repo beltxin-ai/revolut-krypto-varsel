@@ -39,9 +39,10 @@ log = print
 def fmt(x, dec=None):
     if x is None:
         return "–"
+    fijo = dec is not None
     if dec is None:
         dec = 2 if abs(x) >= 1 else 6
-    t = f"{x:,.{dec}f}" if abs(x) >= 1 else f"{x:.4g}"
+    t = f"{x:,.{dec}f}" if (abs(x) >= 1 or fijo) else f"{x:.4g}"
     return t.replace(",", "X").replace(".", ",").replace("X", ".")
 
 
@@ -105,12 +106,29 @@ def revolut_x():
     return out
 
 
+RESPALDO = {"okx": 0, "fallos": 0}     # contador de uso de la fuente de reserva en esta revisión
+
+
+def velas(t, marco, n, ahora_ms):
+    """Velas cerradas: Binance y, si falla, OKX (fuente de reserva)."""
+    try:
+        return f.solo_cerradas(f.binance_velas(f"{t}USDT", marco, n), ahora_ms)
+    except Exception as e1:  # noqa: BLE001
+        try:
+            v = f.solo_cerradas(f.okx_velas(f"{t}-USDT", marco, n), ahora_ms)
+            RESPALDO["okx"] += 1
+            return v
+        except Exception as e2:  # noqa: BLE001
+            RESPALDO["fallos"] += 1
+            raise RuntimeError(f"{t} {marco}: Binance ({str(e1)[:60]}) y OKX ({str(e2)[:60]}) fallaron")
+
+
 def velas_diarias(t, cache, ahora_ms):
     c = cache.get(t)
     if c and c["ct"] and ahora_ms < c["ct"][-1] + D1 + 5 * 60_000:
         return c
     try:
-        v = f.solo_cerradas(f.binance_velas(f"{t}USDT", "1d", 400), ahora_ms)
+        v = velas(t, "1d", 400, ahora_ms)
     except Exception as e:  # noqa: BLE001
         log("velas", t, e)
         return c
@@ -274,7 +292,7 @@ def main():
     alertas = []
     btc_1h = None
     try:
-        vb = f.solo_cerradas(f.binance_velas("BTCUSDT", "1h", 30), ahora_ms)
+        vb = velas("BTC", "1h", 30, ahora_ms)
         btc_1h = vb["c"][-1] / vb["o"][-1] - 1
         if btc_1h <= sis.CAIDA_BTC_1H and est["satelite"]:
             alertas.append({"tipo": "btc", "ticker": "BTC", "t": vb["t"][-1],
@@ -285,7 +303,7 @@ def main():
         if not p.get("nivel_ruptura") and t in datos:
             p["nivel_ruptura"] = sis.nivel_ruptura_entrada(datos[t], series[t], p["t"])
         try:
-            v1 = f.solo_cerradas(f.binance_velas(f"{t}USDT", "1h", 30), ahora_ms)
+            v1 = velas(t, "1h", 30, ahora_ms)
         except Exception as e:  # noqa: BLE001
             log("velas 1h", t, e)
             continue
@@ -387,6 +405,24 @@ def main():
                "desde": est["inicio"],
                "btc_desde": (rx["BTC"]["mid"] / curva[0][2] - 1) if (curva and curva[0][2] and "BTC" in rx) else None}
 
+    if RESPALDO["okx"] or RESPALDO["fallos"]:
+        fuentes["OKX (reserva)"] = f"usada {RESPALDO['okx']} veces" + (f" · {RESPALDO['fallos']} fallos" if RESPALDO["fallos"] else "")
+    revis_24h = sum(1 for x in est["latidos"] if t0 - x <= 86400)
+    hoy = time.strftime("%Y-%m-%d", time.gmtime(t0))
+    if time.gmtime(t0).tm_hour >= 5 and est.get("ult_parte") != hoy:
+        est["ult_parte"] = hoy
+        sen24 = [f"{'🟢' if x['tipo'] == 'entrada' else '🔴'} {x['ticker']}" for x in est["senales"] if t0 - x["t"] <= 86400]
+        posic = [p["ticker"] for p in list(est["nucleo"].values()) + list(est["satelite"].values())]
+        estado_f = " · ".join(f"{k} {'OK' if str(v).startswith('OK') else '⚠️'}" for k, v in fuentes.items())
+        avisar(f"📋 Parte diario · {hoy}",
+               f"Revisiones 24 h: {revis_24h}/96 ({fmt(min(1, revis_24h / 96) * 100, 0)} %)\n"
+               f"Fuentes: {estado_f}\n"
+               f"Régimen: {'alcista' if reg['alcista'] else 'BAJISTA'} (BTC {fmt((reg['distancia'] or 0) * 100, 1)} % vs SMA200)\n"
+               f"Cartera modelo: {fmt((equity - 1) * 100, 1)} % · exposición {fmt(exposicion * 100, 0)} %\n"
+               f"Posiciones: {', '.join(posic) or 'ninguna'}\n"
+               f"Señales 24 h: {' '.join(sen24) or 'ninguna'}",
+               click=enlace(), tags="clipboard", prioridad=2)
+
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     (DATA_DIR / "state").mkdir(parents=True, exist_ok=True)
     (DATA_DIR / "state" / "cartera.json").write_text(json.dumps(est, ensure_ascii=False))
@@ -401,7 +437,7 @@ def main():
         "eventos": [{"tipo": tp, "ticker": p["ticker"]} for tp, p in eventos],
         "senales": est["senales"][:30], "ordenes": ordenes, "alertas_h": alertas, "btc_1h": btc_1h,
         "exposicion": exposicion, "gestion": {"riesgo_max": sis.RIESGO_MAX, "exposicion_max": sis.EXPOSICION_MAX,
-                                              "caida_btc_1h": sis.CAIDA_BTC_1H, "vol_x": sis.VOL_X_PROTECCION}, "latidos": est["latidos"], "intervalo_s": int(os.getenv("INTERVALO_SEG", "900")),
+                                              "caida_btc_1h": sis.CAIDA_BTC_1H, "vol_x": sis.VOL_X_PROTECCION}, "latidos": est["latidos"], "revisiones_24h": revis_24h, "intervalo_s": int(os.getenv("INTERVALO_SEG", "900")),
         "filas": filas,
         "sistema": {"peso_nucleo": sis.PESO_NUCLEO, "peso_satelite": sis.PESO_SATELITE, "max_satelite": sis.MAX_SATELITE,
                     "entrada": sis.ENTRADA_N, "salida": sis.SALIDA_N, "stop_atr": sis.STOP_ATR, "trail_atr": sis.TRAIL_ATR},
