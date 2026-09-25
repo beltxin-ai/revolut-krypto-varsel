@@ -42,6 +42,7 @@ tbody tr[data-t]{cursor:pointer}tbody tr[data-t]:hover td{background:color-mix(i
 svg.ch{width:100%;height:220px;display:block}
 .btn{font:inherit;font-size:13px;border:1px solid var(--ln);background:var(--card);color:var(--tx);border-radius:999px;padding:6px 12px;cursor:pointer;text-decoration:none;display:inline-block}
 .note{font-size:12px;color:var(--mut);margin-top:8px}
+.nv{display:inline-block;font-size:10px;font-weight:600;padding:1px 6px;border-radius:999px;border:1px solid var(--am);color:var(--am);vertical-align:middle}
 input[type=search]{font:inherit;padding:6px 10px;border:1px solid var(--ln);border-radius:8px;background:var(--card);color:var(--tx);max-width:220px;width:100%}
 ol,ul{padding-left:20px}li{margin:4px 0}
 </style>
@@ -112,7 +113,8 @@ const badge = a => `<span class="b ${BADGE[a] || 'n'}">${esc(a)}</span>`;
 function lineaRec(x) {
   const r = x.rec; if (!r) return '';
   return `<div class="pos" data-t="${esc(x.ticker)}"><div>${badge(r.accion)} <b>${esc(x.ticker)}</b>
-    <div class="sm mut">${esc(r.texto)}${r.nivel ? ` · nivel ${usd(r.nivel)} (${r.dist >= 0 ? `precio un ${esn(r.dist * 100, 1)} % por encima` : `le falta un ${esn(-r.dist * 100, 1)} %`})` : ''}</div></div>
+    <div class="sm mut">${esc(r.texto)}${r.nivel ? ` · nivel ${usd(r.nivel)} (${r.dist >= 0 ? `precio un ${esn(r.dist * 100, 1)} % por encima` : `le falta un ${esn(-r.dist * 100, 1)} %`})` : ''}</div>
+    ${x.gestion ? `<div class="sm ${x.gestion.riesgo > D.gestion.riesgo_max + 1e-4 ? 'dn' : 'mut'}">Si salta el stop: −${esn(x.gestion.riesgo * 100, 1)} % del capital${x.gestion.riesgo > D.gestion.riesgo_max + 1e-4 ? ` · para arriesgar ${esn(D.gestion.riesgo_max * 100, 0)} %: reducir al ${esn(x.gestion.sugerido * 100, 1)} % <span class="nv">no validado</span>` : ''}</div>` : ''}</div>
     <div style="text-align:right;white-space:nowrap"><b>${usd(x.precio)}</b><div class="sm">${pc(x.cambio_24h)} 24 h</div></div></div>`;
 }
 function hastaCierre() {
@@ -128,6 +130,13 @@ function hoy() {
   const sen = (D.senales || []).slice(0, 8);
   $('#hoy').innerHTML = `<div class="row sp"><h2 style="margin:0">Recomendaciones</h2><span class="sm mut">Próxima decisión al cierre diario (00:00 UTC) · en ${hastaCierre()}</span></div>
     ${ev.length ? `<div class="banner b2" style="margin:10px 0 0"><b>Órdenes nuevas en esta revisión:</b> ${ev.map(e => `${e.tipo === 'entrada' ? '🟢 COMPRAR' : '🔴 VENDER'} ${esc(e.ticker)}`).join(' · ')}</div>` : ''}
+    ${(D.alertas_h || []).length ? `<div class="banner r" style="margin:10px 0 0"><b>⚠️ Protección (última vela de 1 h)</b> <span class="nv">no validado</span>${D.alertas_h.map(a => `<div class="sm" style="margin-top:4px"><b>${esc(a.ticker)}</b>: ${esc(a.texto)}</div>`).join('')}<div class="sm" style="margin-top:4px">El sistema no vende por esto; es una sugerencia para reducir riesgo.</div></div>` : ''}
+    ${D.gestion && D.exposicion > D.gestion.exposicion_max ? `<p class="sm" style="margin:10px 0 0"><b class="dn">Exposición ${esn(D.exposicion * 100, 0)} %</b> del capital (aviso por encima del ${esn(D.gestion.exposicion_max * 100, 0)} %). Las altcoins caen casi en bloque con BTC. <span class="nv">no validado</span></p>` : ''}
+    ${(D.ordenes || []).length ? `<h3>Órdenes para ejecutar (señales de las últimas 24 h)</h3>
+      <div class="tw"><table><thead><tr><th>Moneda</th><th>Límite sugerido</th><th>Stop</th><th>Tamaño sistema</th><th>Para arriesgar 1 %</th><th>Precio ahora</th></tr></thead><tbody>
+      ${D.ordenes.map(o => `<tr data-t="${esc(o.ticker)}"><td><b>${esc(o.ticker)}</b> <span class="sm mut">${esc(o.sistema || '')}</span></td><td>${usd(o.limite)}</td><td>${o.stop ? usd(o.stop) : 'por tendencia'}</td><td>${esn(o.peso * 100, 0)} %</td><td>${o.sugerido < o.peso - 1e-6 ? esn(o.sugerido * 100, 1) + ' %' : 'igual'}</td><td>${usd(o.precio)}</td></tr>`).join('')}
+      </tbody></table></div>
+      <p class="note">Orden limitada: si no se llena en 24 h, no la persigas. Límite y tamaño ajustado <span class="nv">no validado</span>: como mucho un 1 % sobre el cierre de la señal (el propio cierre si subió más de un 30 % en 24 h).</p>` : ''}
     <h3>Tus posiciones: qué hacer</h3>
     ${mias.map(lineaRec).join('') || '<p class="mut">Sin posiciones. Nada que mantener.</p>'}
     <h3>Posibles compras al próximo cierre</h3>
@@ -241,6 +250,7 @@ function metodo() {
   $('#tab-metodo').innerHTML = `<h2>Reglas</h2>
     <p><b>Núcleo (${esn(s.peso_nucleo * 200, 0)} % del capital):</b> BTC y ETH, ${esn(s.peso_nucleo * 100, 0)} % cada una. Se tiene cuando el cierre diario está por encima de la media de 50 días y esta por encima de la de 200. Si no, liquidez.</p>
     <p><b>Satélite (${esn(s.peso_satelite * s.max_satelite * 100, 0)} %):</b> hasta ${s.max_satelite} altcoins de ${esn(s.peso_satelite * 100, 0)} % cada una. Entrada cuando el cierre diario supera el máximo de ${s.entrada} días y BTC está sobre su media de 200 días. Stop inicial a ${s.stop_atr} ATR, que sube con el máximo (trailing de ${s.trail_atr} ATR). Salida si el cierre cae bajo el mínimo de ${s.salida} días o si toca el stop.</p>
+    <p><b>Gestión y protección <span class="nv">no validado</span>:</b> tamaño reducido para que cada stop cueste como mucho un ${esn((D.gestion || {}).riesgo_max * 100, 0)} % del capital; aviso si la exposición supera el ${esn((D.gestion || {}).exposicion_max * 100, 0)} %; cada hora, aviso ⚠️ PROTEGER (reducir a la mitad) si BTC cae más de un ${esn(-(D.gestion || {}).caida_btc_1h * 100, 0)} % en 1 h o si una altcoin en cartera cierra la vela de 1 h bajo su nivel de ruptura con más de ${(D.gestion || {}).vol_x}× el volumen medio. Estas reglas solo reducen riesgo o afinan la ejecución: no abren operaciones y la cartera modelo no las aplica, para poder compararla con la evidencia.</p>
     <p><b>Frecuencia:</b> las decisiones se toman con la vela diaria cerrada (00:00 UTC). La revisión cada 15 minutos sirve para vigilar los stops con el precio vivo de Revolut X. Espera pocas operaciones: en el periodo de prueba, unas 3 al mes en el satélite y unas 9 al año en el núcleo.</p>
     <h2 style="margin-top:14px">Cómo operarlo en Revolut X</h2>
     <ol>
