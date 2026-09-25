@@ -136,8 +136,8 @@ def okx_simbolos():
 
 
 def okx_velas(inst, marco, limite):
-    bar = {"4h": "4H", "1d": "1Dutc"}[marco]
-    paso = H4 if marco == "4h" else D1
+    bar = {"1h": "1H", "4h": "4H", "1d": "1Dutc"}[marco]
+    paso = {"1h": 3600 * 1000, "4h": H4, "1d": D1}[marco]
     filas, despues = [], None
     while len(filas) < limite:
         url = f"{OKX}/market/history-candles?instId={inst}&bar={bar}&limit=100" + (f"&after={despues}" if despues else "")
