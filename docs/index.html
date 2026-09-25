@@ -78,7 +78,7 @@ ol,ul{padding-left:20px}li{margin:4px 0}
 const $ = s => document.querySelector(s);
 const OWN = location.hostname.split('.')[0], REPO = location.pathname.split('/').filter(Boolean)[0] || 'revolut-krypto-varsel';
 const RAW = b => location.hostname.endsWith('github.io') ? `https://raw.githubusercontent.com/${OWN}/${REPO}/${b}/` : '';
-let D = null, E = null, sortK = 'vol_usd', asc = false, activa = null;
+let D = null, E = null, E2 = null, sortK = 'vol_usd', asc = false, activa = null;
 const esn = (x, d = 2) => x == null || isNaN(x) ? '–' : (Math.abs(x) >= 0.01 || x === 0) ? x.toLocaleString('es-ES', {minimumFractionDigits: d, maximumFractionDigits: d}) : Number(x).toPrecision(3).replace('.', ',');
 const usd = x => x == null ? '–' : (Math.abs(x) >= 1 ? esn(x, 2) : Number(x).toPrecision(4).replace('.', ',')) + ' $';
 const pc = (x, d = 1, col = true) => x == null ? '<span class="mut">–</span>' : `<span class="${col ? (x >= 0 ? 'up' : 'dn') : ''}">${x >= 0 && col ? '+' : ''}${esn(x * 100, d)} %</span>`;
@@ -90,6 +90,7 @@ async function cargar() {
   try { D = await fetch(RAW('data') + 'radar.json?t=' + Date.now(), {cache: 'no-store'}).then(r => r.json()); }
   catch (e) { $('#st').textContent = 'Aún no hay datos. Vuelve en unos minutos.'; return; }
   if (!E) try { E = await fetch(RAW('investigacion') + 'resultados.json?t=' + Date.now(), {cache: 'no-store'}).then(r => r.json()); } catch (e) {}
+  if (!E2) try { E2 = await fetch(RAW('investigacion2') + 'resultados2.json?t=' + Date.now(), {cache: 'no-store'}).then(r => r.json()); } catch (e) {}
   const min = Math.round((Date.now() / 1000 - D.actualizado) / 60);
   const L = D.latidos || [], iv = (D.intervalo_s || 900) / 60, ahora = Date.now() / 1000;
   const n2h = L.filter(t => ahora - t <= 7200).length, prox = Math.max(0, Math.round(iv - min));
@@ -105,7 +106,8 @@ function regimen() {
   const r = D.regimen;
   $('#reg').innerHTML = `<div class="banner ${r.alcista ? 'g' : 'r'}"><div class="l">Régimen de mercado</div>
     <div class="v">${r.alcista ? 'Alcista: se permiten entradas en altcoins' : 'Bajista: no se abren altcoins nuevas'}</div>
-    <div class="sm">BTC ${usd(r.btc)} · ${pc(r.distancia)} frente a su media de 200 días (${usd(r.sma200)})</div></div>`;
+    <div class="sm">BTC ${usd(r.btc)} · ${pc(r.distancia)} frente a su media de 200 días (${usd(r.sma200)})</div>
+    ${D.volatilidad && D.volatilidad.btc_30d ? `<div class="sm">Volatilidad de BTC (30 d): ${esn(D.volatilidad.btc_30d * 100, 0)} % anual · objetivo ${esn(D.volatilidad.objetivo * 100, 0)} % → entradas nuevas al <b>${esn(D.volatilidad.factor * 100, 0)} %</b> de su tamaño</div>` : ''}</div>`;
 }
 
 const BADGE = {'MANTENER': 'g up', 'ALERTA': 'r dn', 'POSIBLE COMPRA': 'b2', 'VIGILAR': 'y', 'NO COMPRAR': 'n mut', 'SIN HUECO': 'n mut'};
@@ -232,6 +234,23 @@ function evidencia() {
     <td>${cel(r.entrenamiento, 'sharpe', false)}</td><td>${cel(r.fuera_de_muestra, 'cagr')}</td><td>${cel(r.fuera_de_muestra, 'sharpe', false)}</td>
     <td>${cel(r.fuera_de_muestra, 'max_dd')}</td><td>${r.fuera_de_muestra.operaciones || '–'}</td><td>${cel(r.fuera_de_muestra, 'profit_factor', false)}</td></tr>`).join('');
   const a = E.estrategia_actual_4h || {};
+  const f2 = !E2 ? '' : (() => {
+    const base = E2.resultados[0];
+    const fila = r => `<tr${r.mejora_ambos ? ' style="font-weight:700"' : ''}><td style="text-align:left;white-space:normal;min-width:190px">${esc(r.nombre)}</td>
+      <td>${esn(r.entrenamiento.sharpe, 2)}</td><td>${esn(r.fuera_de_muestra.sharpe, 2)}</td><td>${pc(r.fuera_de_muestra.cagr, 0)}</td><td>${pc(r.fuera_de_muestra.max_dd, 0)}</td>
+      <td>${r.fuera_de_muestra.profit_factor != null ? esn(r.fuera_de_muestra.profit_factor, 2) : '–'}</td>
+      <td>${r === base ? 'base' : r.mejora_ambos ? '<span class="up">✔ adoptada</span>' : '<span class="dn">✘ descartada</span>'}</td></tr>`;
+    return `<h2 style="margin-top:18px">Fases 2 y 3: mejoras probadas sobre la cartera completa</h2>
+      <p>Cartera única (núcleo + satélite) sobre ${E2.universo.n} monedas, mismos costes. Regla fijada de antemano: una mejora solo se adopta si supera a la base en Sharpe y en Calmar <b>tanto en entrenamiento como fuera de muestra</b>.</p>
+      <div class="tw"><table><thead><tr><th>Variante</th><th>Sharpe entren.</th><th>Sharpe fuera</th><th>Rent. anual fuera</th><th>Caída máx. fuera</th><th>PF fuera</th><th>Resultado</th></tr></thead><tbody>${E2.resultados.map(fila).join('')}</tbody></table></div>
+      <ul>
+        <li><b>Entrada intradía</b>: peor en los dos periodos (profit factor < 1 fuera de muestra). Las rupturas durante el día fallan más que las confirmadas al cierre.</li>
+        <li><b>Cortacircuitos</b>: brillante en entrenamiento y peor fuera de muestra; se quedaba bloqueado y perdía las recuperaciones.</li>
+        <li><b>Momentum como tercer bloque</b>: espectacular en los dos últimos años y malo antes, con caídas del −48 %. Inconsistente: descartado.</li>
+        <li><b>Tamaño por riesgo</b>: baja la caída máxima (−34 % → −27 % fuera de muestra) a cambio de algo menos de rentabilidad. No pasa el filtro, pero sigue como sugerencia opcional.</li>
+        <li><b>Control de volatilidad</b>: única mejora adoptada. El efecto es pequeño y consistente.</li>
+      </ul>`;
+  })();
   $('#tab-evidencia').innerHTML = `<h2>Por qué este sistema</h2>
     <p>Se probaron 12 variantes fijadas de antemano y 3 referencias sobre ${E.universo.n} monedas líquidas de Revolut X, con costes reales (comisión 0,09 % + medio spread del par + 0,05 % de deslizamiento por operación). Los parámetros se eligieron con el periodo de entrenamiento (${esc(E.periodos.entrenamiento.join(' → '))}) y se midieron en un periodo que no se tocó (${esc(E.periodos.fuera_de_muestra.join(' → '))}).</p>
     <div class="tw"><table><thead><tr><th>Estrategia</th><th>Sharpe entren.</th><th>Rent. anual fuera</th><th>Sharpe fuera</th><th>Caída máx. fuera</th><th>Ops fuera</th><th>PF fuera</th></tr></thead><tbody>${rows}</tbody></table></div>
@@ -242,7 +261,7 @@ function evidencia() {
       <li>Son unos 5 años con un único gran mercado bajista (2022). Es poca muestra para un sistema de tendencia.</li>
       <li>Las caídas máximas son grandes (−26 % el núcleo, −46 % el satélite). Solo sirve si aguantas eso sin abandonar el sistema.</li>
       <li>El spread de hoy se usó para todo el periodo; en momentos de pánico suele ser mayor.</li>
-    </ul>`;
+    </ul>${f2}`;
 }
 
 function metodo() {
@@ -250,6 +269,7 @@ function metodo() {
   $('#tab-metodo').innerHTML = `<h2>Reglas</h2>
     <p><b>Núcleo (${esn(s.peso_nucleo * 200, 0)} % del capital):</b> BTC y ETH, ${esn(s.peso_nucleo * 100, 0)} % cada una. Se tiene cuando el cierre diario está por encima de la media de 50 días y esta por encima de la de 200. Si no, liquidez.</p>
     <p><b>Satélite (${esn(s.peso_satelite * s.max_satelite * 100, 0)} %):</b> hasta ${s.max_satelite} altcoins de ${esn(s.peso_satelite * 100, 0)} % cada una. Entrada cuando el cierre diario supera el máximo de ${s.entrada} días y BTC está sobre su media de 200 días. Stop inicial a ${s.stop_atr} ATR, que sube con el máximo (trailing de ${s.trail_atr} ATR). Salida si el cierre cae bajo el mínimo de ${s.salida} días o si toca el stop.</p>
+    <p><b>Control de volatilidad (validado):</b> el tamaño de cada entrada nueva se multiplica por min(1, ${esn(((D.volatilidad || {}).objetivo || 0.5) * 100, 0)} % / volatilidad de BTC a 30 días). Con el mercado nervioso se entra más pequeño; con el mercado tranquilo, a tamaño completo. Fue la única mejora que superó el filtro de las fases 2 y 3 (pestaña Evidencia).</p>
     <p><b>Gestión y protección <span class="nv">no validado</span>:</b> tamaño reducido para que cada stop cueste como mucho un ${esn((D.gestion || {}).riesgo_max * 100, 0)} % del capital; aviso si la exposición supera el ${esn((D.gestion || {}).exposicion_max * 100, 0)} %; cada hora, aviso ⚠️ PROTEGER (reducir a la mitad) si BTC cae más de un ${esn(-(D.gestion || {}).caida_btc_1h * 100, 0)} % en 1 h o si una altcoin en cartera cierra la vela de 1 h bajo su nivel de ruptura con más de ${(D.gestion || {}).vol_x}× el volumen medio. Estas reglas solo reducen riesgo o afinan la ejecución: no abren operaciones y la cartera modelo no las aplica, para poder compararla con la evidencia.</p>
     <p><b>Frecuencia:</b> las decisiones se toman con la vela diaria cerrada (00:00 UTC). La revisión cada 15 minutos sirve para vigilar los stops con el precio vivo de Revolut X. Espera pocas operaciones: en el periodo de prueba, unas 3 al mes en el satélite y unas 9 al año en el núcleo.</p>
     <h2 style="margin-top:14px">Cómo operarlo en Revolut X</h2>
