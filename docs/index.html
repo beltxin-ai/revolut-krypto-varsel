@@ -78,7 +78,7 @@ ol,ul{padding-left:20px}li{margin:4px 0}
 const $ = s => document.querySelector(s);
 const OWN = location.hostname.split('.')[0], REPO = location.pathname.split('/').filter(Boolean)[0] || 'revolut-krypto-varsel';
 const RAW = b => location.hostname.endsWith('github.io') ? `https://raw.githubusercontent.com/${OWN}/${REPO}/${b}/` : '';
-let D = null, E = null, E2 = null, sortK = 'vol_usd', asc = false, activa = null;
+let D = null, E = null, E2 = null, E3 = null, sortK = 'vol_usd', asc = false, activa = null;
 const esn = (x, d = 2) => x == null || isNaN(x) ? '–' : (Math.abs(x) >= 0.01 || x === 0) ? x.toLocaleString('es-ES', {minimumFractionDigits: d, maximumFractionDigits: d}) : Number(x).toPrecision(3).replace('.', ',');
 const usd = x => x == null ? '–' : (Math.abs(x) >= 1 ? esn(x, 2) : Number(x).toPrecision(4).replace('.', ',')) + ' $';
 const pc = (x, d = 1, col = true) => x == null ? '<span class="mut">–</span>' : `<span class="${col ? (x >= 0 ? 'up' : 'dn') : ''}">${x >= 0 && col ? '+' : ''}${esn(x * 100, d)} %</span>`;
@@ -90,6 +90,7 @@ async function cargar() {
   try { D = await fetch(RAW('data') + 'radar.json?t=' + Date.now(), {cache: 'no-store'}).then(r => r.json()); }
   catch (e) { $('#st').textContent = 'Aún no hay datos. Vuelve en unos minutos.'; return; }
   if (!E) try { E = await fetch(RAW('investigacion') + 'resultados.json?t=' + Date.now(), {cache: 'no-store'}).then(r => r.json()); } catch (e) {}
+  if (!E3) try { E3 = await fetch(RAW('investigacion3') + 'resultados3.json?t=' + Date.now(), {cache: 'no-store'}).then(r => r.json()); } catch (e) {}
   if (!E2) try { E2 = await fetch(RAW('investigacion2') + 'resultados2.json?t=' + Date.now(), {cache: 'no-store'}).then(r => r.json()); } catch (e) {}
   const min = Math.round((Date.now() / 1000 - D.actualizado) / 60);
   const L = D.latidos || [], iv = (D.intervalo_s || 900) / 60, ahora = Date.now() / 1000;
@@ -119,8 +120,14 @@ function lineaRec(x) {
     ${x.gestion ? `<div class="sm ${x.gestion.riesgo > D.gestion.riesgo_max + 1e-4 ? 'dn' : 'mut'}">Si salta el stop: −${esn(x.gestion.riesgo * 100, 1)} % del capital${x.gestion.riesgo > D.gestion.riesgo_max + 1e-4 ? ` · para arriesgar ${esn(D.gestion.riesgo_max * 100, 0)} %: reducir al ${esn(x.gestion.sugerido * 100, 1)} % <span class="nv">no validado</span>` : ''}</div>` : ''}</div>
     <div style="text-align:right;white-space:nowrap"><b>${usd(x.precio)}</b><div class="sm">${pc(x.cambio_24h)} 24 h</div></div></div>`;
 }
+function horaCierre() {
+  const H = D.hora_cierre_utc || 0, n = new Date(), d = new Date(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate(), H));
+  return `${String(H).padStart(2, '0')}:00 UTC = ${d.toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'})} tu hora`;
+}
 function hastaCierre() {
-  const n = new Date(), c = Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate() + 1);
+  const H = D.hora_cierre_utc || 0, n = new Date();
+  let c = Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate(), H);
+  if (c <= n) c += 86400000;
   const m = Math.round((c - n) / 60000); return `${Math.floor(m / 60)} h ${m % 60} min`;
 }
 function hoy() {
@@ -130,7 +137,7 @@ function hoy() {
   const vig = F.filter(x => x.rec && x.rec.accion === 'VIGILAR');
   const resto = F.length - mias.length - posibles.length - vig.length;
   const sen = (D.senales || []).slice(0, 8);
-  $('#hoy').innerHTML = `<div class="row sp"><h2 style="margin:0">Recomendaciones</h2><span class="sm mut">Próxima decisión al cierre diario (00:00 UTC) · en ${hastaCierre()}</span></div>
+  $('#hoy').innerHTML = `<div class="row sp"><h2 style="margin:0">Recomendaciones</h2><span class="sm mut">Próxima decisión al cierre diario (${horaCierre()}) · en ${hastaCierre()}</span></div>
     ${ev.length ? `<div class="banner b2" style="margin:10px 0 0"><b>Órdenes nuevas en esta revisión:</b> ${ev.map(e => `${e.tipo === 'entrada' ? '🟢 COMPRAR' : '🔴 VENDER'} ${esc(e.ticker)}`).join(' · ')}</div>` : ''}
     ${(D.alertas_h || []).length ? `<div class="banner r" style="margin:10px 0 0"><b>⚠️ Protección (última vela de 1 h)</b> <span class="nv">no validado</span>${D.alertas_h.map(a => `<div class="sm" style="margin-top:4px"><b>${esc(a.ticker)}</b>: ${esc(a.texto)}</div>`).join('')}<div class="sm" style="margin-top:4px">El sistema no vende por esto; es una sugerencia para reducir riesgo.</div></div>` : ''}
     ${D.gestion && D.exposicion > D.gestion.exposicion_max ? `<p class="sm" style="margin:10px 0 0"><b class="dn">Exposición ${esn(D.exposicion * 100, 0)} %</b> del capital (aviso por encima del ${esn(D.gestion.exposicion_max * 100, 0)} %). Las altcoins caen casi en bloque con BTC. <span class="nv">no validado</span></p>` : ''}
@@ -209,7 +216,7 @@ function vigilar() {
     <h2 style="margin-top:16px">A menos de un 5 % de romper</h2>
     <div class="tw"><table><thead><tr><th>Moneda</th><th>Precio</th><th>Distancia</th><th>ATR diario</th><th>Spread</th></tr></thead><tbody>
     ${ce.map(fila).join('') || '<tr><td colspan="5" class="mut">Ninguna.</td></tr>'}</tbody></table></div>
-    <p class="note">La compra solo se confirma al cierre diario (00:00 UTC = 02:00 en Noruega en verano). Una ruptura durante el día puede deshacerse antes del cierre.</p>`;
+    <p class="note">La compra solo se confirma al cierre diario (${horaCierre()}). Una ruptura durante el día puede deshacerse antes del cierre.</p>`;
 }
 
 function universo() {
@@ -261,7 +268,12 @@ function evidencia() {
       <li>Son unos 5 años con un único gran mercado bajista (2022). Es poca muestra para un sistema de tendencia.</li>
       <li>Las caídas máximas son grandes (−26 % el núcleo, −46 % el satélite). Solo sirve si aguantas eso sin abandonar el sistema.</li>
       <li>El spread de hoy se usó para todo el periodo; en momentos de pánico suele ser mayor.</li>
-    </ul>${f2}`;
+    </ul>${f2}${!E3 ? '' : `<h2 style="margin-top:18px">Hora del cierre diario</h2>
+      <p>Se probó qué pasa si la señal llega de madrugada y se ejecuta al despertar. Mismo sistema, mismos costes, ${E3.universo.n} monedas.</p>
+      <div class="tw"><table><thead><tr><th>Escenario</th><th>Sharpe entren.</th><th>Sharpe fuera</th><th>Rent. anual (5 años)</th><th>Caída máx.</th></tr></thead><tbody>
+      ${E3.resultados.map((r, i) => `<tr${i === 2 ? ' style="font-weight:700"' : ''}><td style="text-align:left;white-space:normal;min-width:190px">${esc(r.nombre)}</td><td>${esn(r.entrenamiento.sharpe, 2)}</td><td>${esn(r.fuera_de_muestra.sharpe, 2)}</td><td>${pc(r.completo.cagr, 0)}</td><td>${pc(r.completo.max_dd, 0)}</td></tr>`).join('')}
+      </tbody></table></div>
+      <p class="note">Comprar 6 horas tarde se come la mayor parte de la ventaja. Con el cierre a las 06:00 UTC la señal llega cuando estás despierto: hay que ejecutarla en cuanto llegue, no a media mañana.</p>`}`;
 }
 
 function metodo() {
@@ -271,7 +283,7 @@ function metodo() {
     <p><b>Satélite (${esn(s.peso_satelite * s.max_satelite * 100, 0)} %):</b> hasta ${s.max_satelite} altcoins de ${esn(s.peso_satelite * 100, 0)} % cada una. Entrada cuando el cierre diario supera el máximo de ${s.entrada} días y BTC está sobre su media de 200 días. Stop inicial a ${s.stop_atr} ATR, que sube con el máximo (trailing de ${s.trail_atr} ATR). Salida si el cierre cae bajo el mínimo de ${s.salida} días o si toca el stop.</p>
     <p><b>Control de volatilidad (validado):</b> el tamaño de cada entrada nueva se multiplica por min(1, ${esn(((D.volatilidad || {}).objetivo || 0.5) * 100, 0)} % / volatilidad de BTC a 30 días). Con el mercado nervioso se entra más pequeño; con el mercado tranquilo, a tamaño completo. Fue la única mejora que superó el filtro de las fases 2 y 3 (pestaña Evidencia).</p>
     <p><b>Gestión y protección <span class="nv">no validado</span>:</b> tamaño reducido para que cada stop cueste como mucho un ${esn((D.gestion || {}).riesgo_max * 100, 0)} % del capital; aviso si la exposición supera el ${esn((D.gestion || {}).exposicion_max * 100, 0)} %; cada hora, aviso ⚠️ PROTEGER (reducir a la mitad) si BTC cae más de un ${esn(-(D.gestion || {}).caida_btc_1h * 100, 0)} % en 1 h o si una altcoin en cartera cierra la vela de 1 h bajo su nivel de ruptura con más de ${(D.gestion || {}).vol_x}× el volumen medio. Estas reglas solo reducen riesgo o afinan la ejecución: no abren operaciones y la cartera modelo no las aplica, para poder compararla con la evidencia.</p>
-    <p><b>Frecuencia:</b> las decisiones se toman con la vela diaria cerrada (00:00 UTC). La revisión cada 15 minutos sirve para vigilar los stops con el precio vivo de Revolut X. Espera pocas operaciones: en el periodo de prueba, unas 3 al mes en el satélite y unas 9 al año en el núcleo.</p>
+    <p><b>Frecuencia:</b> las decisiones se toman con la vela diaria cerrada (${horaCierre()}), elegida para que la señal llegue cuando estás despierto y puedas ejecutarla al momento. La revisión cada 15 minutos sirve para vigilar los stops con el precio vivo de Revolut X. Espera pocas operaciones: en el periodo de prueba, unas 3 al mes en el satélite y unas 9 al año en el núcleo.</p>
     <h2 style="margin-top:14px">Cómo operarlo en Revolut X</h2>
     <ol>
       <li>Decide qué parte de tu dinero es «capital de trading». Los porcentajes se refieren a esa cantidad.</li>
