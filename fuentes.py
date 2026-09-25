@@ -119,8 +119,9 @@ def binance_simbolos():
     return {x["symbol"] for x in pedir(f"{BINANCE}/ticker/price") if x["symbol"].endswith("USDT")}
 
 
-def binance_velas(par, marco, limite):
-    datos = pedir(f"{BINANCE}/klines?symbol={par}&interval={marco}&limit={limite}")
+def binance_velas(par, marco, limite, tz=None):
+    """tz: desplazamiento horario de Binance (p. ej. -6 → velas diarias de 06:00 a 06:00 UTC)."""
+    datos = pedir(f"{BINANCE}/klines?symbol={par}&interval={marco}&limit={limite}" + (f"&timeZone={tz}" if tz else ""))
     v = _velas_vacias()
     for k in datos:
         v["t"].append(int(k[0])); v["ct"].append(int(k[6]))
