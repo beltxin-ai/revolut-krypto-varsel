@@ -1,0 +1,27 @@
+name: Investigación hora de cierre
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  investigar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Ejecutar investigación
+        run: python investigacion3.py
+      - name: Publicar resultados (rama investigacion3)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p out && cp resultados3.json out/
+          cd out && git init -q -b investigacion3 && git add -A \
+            && git -c user.name="radar" -c user.email="actions@users.noreply.github.com" commit -qm "resultados $(date -u +%FT%TZ)" \
+            && git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" investigacion3
