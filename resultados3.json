@@ -1,0 +1,328 @@
+{
+ "generado": 1790351759,
+ "segundos": 171,
+ "metodo_velas_0600": "timeZone=-6",
+ "universo": {
+  "n": 44,
+  "monedas": [
+   "AAVE",
+   "ADA",
+   "APT",
+   "ARB",
+   "AVAX",
+   "BCH",
+   "BNB",
+   "BONK",
+   "BTC",
+   "COTI",
+   "DASH",
+   "DOGE",
+   "DOT",
+   "EGLD",
+   "ENA",
+   "ETH",
+   "FET",
+   "FIL",
+   "HBAR",
+   "ICP",
+   "INJ",
+   "JUP",
+   "LDO",
+   "LINK",
+   "LTC",
+   "NEAR",
+   "ONDO",
+   "PENGU",
+   "PEPE",
+   "POL",
+   "PUMP",
+   "QNT",
+   "RARE",
+   "RAY",
+   "RENDER",
+   "SEI",
+   "SHIB",
+   "SOL",
+   "SUI",
+   "TRUMP",
+   "UNI",
+   "WIF",
+   "XLM",
+   "XRP"
+  ]
+ },
+ "resultados": [
+  {
+   "nombre": "A · Cierre 00:00 UTC, compra al instante (teórico)",
+   "entrenamiento": {
+    "total": 0.753953986845258,
+    "cagr": 0.21061798529529407,
+    "sharpe": 0.8136885344717207,
+    "sortino": 0.8350747055395555,
+    "max_dd": -0.26370471126221284,
+    "operaciones": 140,
+    "aciertos": 0.32857142857142857,
+    "media": 0.04531409891116195,
+    "profit_factor": 1.778239324574889,
+    "calmar": 0.7986887465422172,
+    "por_bloque": {
+     "core": {
+      "operaciones": 35,
+      "aciertos": 0.22857142857142856,
+      "media": 0.01732450518699918,
+      "profit_factor": 1.6413891474612776
+     },
+     "sat": {
+      "operaciones": 105,
+      "aciertos": 0.3619047619047619,
+      "media": 0.05464396348588287,
+      "profit_factor": 1.7961924135783653
+     },
+     "mom": {
+      "operaciones": 0
+     }
+    }
+   },
+   "fuera_de_muestra": {
+    "total": 0.370707629468666,
+    "cagr": 0.17465112586856657,
+    "sharpe": 0.7055312327879801,
+    "sortino": 0.6610424749969116,
+    "max_dd": -0.33140451639406776,
+    "operaciones": 99,
+    "aciertos": 0.36363636363636365,
+    "media": 0.019995100448415765,
+    "profit_factor": 1.295596999778842,
+    "calmar": 0.5270028536994702,
+    "por_bloque": {
+     "core": {
+      "operaciones": 18,
+      "aciertos": 0.2222222222222222,
+      "media": 0.026619285244542306,
+      "profit_factor": 1.908453107809776
+     },
+     "sat": {
+      "operaciones": 81,
+      "aciertos": 0.3950617283950617,
+      "media": 0.018523059382609865,
+      "profit_factor": 1.2432015572664648
+     },
+     "mom": {
+      "operaciones": 0
+     }
+    }
+   },
+   "completo": {
+    "total": 1.4542678023159272,
+    "cagr": 0.20115253145332535,
+    "sharpe": 0.785162062143567,
+    "sortino": 0.7791916693746328,
+    "max_dd": -0.3314071753089951,
+    "operaciones": 238,
+    "aciertos": 0.3487394957983193,
+    "media": 0.03612152485060375,
+    "profit_factor": 1.587529059307115,
+    "calmar": 0.6069649254448886,
+    "por_bloque": {
+     "core": {
+      "operaciones": 53,
+      "aciertos": 0.22641509433962265,
+      "media": 0.020481222942391172,
+      "profit_factor": 1.7370278838158122
+     },
+     "sat": {
+      "operaciones": 185,
+      "aciertos": 0.3837837837837838,
+      "media": 0.04060225999187546,
+      "profit_factor": 1.5707971510628544
+     },
+     "mom": {
+      "operaciones": 0
+     }
+    }
+   }
+  },
+  {
+   "nombre": "B · Cierre 00:00 UTC, compra a las 06:00 (lo que pasa hoy)",
+   "entrenamiento": {
+    "total": 0.1875361424571238,
+    "cagr": 0.06021134361660074,
+    "sharpe": 0.3518245468504683,
+    "sortino": 0.32766318056835686,
+    "max_dd": -0.30852421498142524,
+    "operaciones": 147,
+    "aciertos": 0.29931972789115646,
+    "media": 0.013328282590882905,
+    "profit_factor": 1.2008438244647601,
+    "calmar": 0.1951592150399792,
+    "por_bloque": {
+     "core": {
+      "operaciones": 35,
+      "aciertos": 0.2857142857142857,
+      "media": 0.01696606550420993,
+      "profit_factor": 1.598173396551641
+     },
+     "sat": {
+      "operaciones": 112,
+      "aciertos": 0.30357142857142855,
+      "media": 0.012191475430468208,
+      "profit_factor": 1.1558296906775638
+     },
+     "mom": {
+      "operaciones": 0
+     }
+    }
+   },
+   "fuera_de_muestra": {
+    "total": 0.15987480588366854,
+    "cagr": 0.07865161633688134,
+    "sharpe": 0.4107606687012421,
+    "sortino": 0.38268712825134177,
+    "max_dd": -0.35211843627888684,
+    "operaciones": 104,
+    "aciertos": 0.3076923076923077,
+    "media": 0.004648764026495764,
+    "profit_factor": 1.0605854579362126,
+    "calmar": 0.2233669363298752,
+    "por_bloque": {
+     "core": {
+      "operaciones": 18,
+      "aciertos": 0.2222222222222222,
+      "media": 0.02497493153080225,
+      "profit_factor": 1.8216884310142654
+     },
+     "sat": {
+      "operaciones": 86,
+      "aciertos": 0.32558139534883723,
+      "media": 0.0003944498976874291,
+      "profit_factor": 1.0045638640833219
+     },
+     "mom": {
+      "operaciones": 0
+     }
+    }
+   },
+   "completo": {
+    "total": 0.40610419792433583,
+    "cagr": 0.07205261714239586,
+    "sharpe": 0.39121391478716405,
+    "sortino": 0.36611938734195215,
+    "max_dd": -0.35212042403676025,
+    "operaciones": 250,
+    "aciertos": 0.308,
+    "media": 0.010844639537092134,
+    "profit_factor": 1.1547488375568042,
+    "calmar": 0.20462493006334048,
+    "por_bloque": {
+     "core": {
+      "operaciones": 53,
+      "aciertos": 0.2641509433962264,
+      "media": 0.019686057739656374,
+      "profit_factor": 1.677589468617905
+     },
+     "sat": {
+      "operaciones": 197,
+      "aciertos": 0.3197969543147208,
+      "media": 0.008465983878534242,
+      "profit_factor": 1.1043683425525397
+     },
+     "mom": {
+      "operaciones": 0
+     }
+    }
+   }
+  },
+  {
+   "nombre": "C · Cierre 06:00 UTC, compra al instante (propuesta)",
+   "entrenamiento": {
+    "total": 0.4003992146860049,
+    "cagr": 0.12137318365503447,
+    "sharpe": 0.5460427852352798,
+    "sortino": 0.5193616986189329,
+    "max_dd": -0.3545721908093219,
+    "operaciones": 141,
+    "aciertos": 0.3120567375886525,
+    "media": 0.026246895973856526,
+    "profit_factor": 1.4209780570614459,
+    "calmar": 0.34230880706689504,
+    "por_bloque": {
+     "core": {
+      "operaciones": 34,
+      "aciertos": 0.29411764705882354,
+      "media": 0.01540046201415921,
+      "profit_factor": 1.5150370026013968
+     },
+     "sat": {
+      "operaciones": 107,
+      "aciertos": 0.3177570093457944,
+      "media": 0.029693426390956606,
+      "profit_factor": 1.408677879530863
+     },
+     "mom": {
+      "operaciones": 0
+     }
+    }
+   },
+   "fuera_de_muestra": {
+    "total": 0.4623014892116659,
+    "cagr": 0.21408646548935328,
+    "sharpe": 0.7905222307295368,
+    "sortino": 0.7817157880377981,
+    "max_dd": -0.3244487654448617,
+    "operaciones": 99,
+    "aciertos": 0.3838383838383838,
+    "media": 0.02940057811520515,
+    "profit_factor": 1.4466876151755157,
+    "calmar": 0.6598467563771209,
+    "por_bloque": {
+     "core": {
+      "operaciones": 16,
+      "aciertos": 0.1875,
+      "media": 0.03479348677461499,
+      "profit_factor": 1.9991869455504858
+     },
+     "sat": {
+      "operaciones": 83,
+      "aciertos": 0.42168674698795183,
+      "media": 0.028360981265198437,
+      "profit_factor": 1.3950300714091424
+     },
+     "mom": {
+      "operaciones": 0
+     }
+    }
+   },
+   "completo": {
+    "total": 1.0423785070366849,
+    "cagr": 0.1569399234784674,
+    "sharpe": 0.6455971836697462,
+    "sortino": 0.6253552345014358,
+    "max_dd": -0.3545721908093219,
+    "operaciones": 241,
+    "aciertos": 0.34439834024896265,
+    "media": 0.02755924646465502,
+    "profit_factor": 1.4331199981552736,
+    "calmar": 0.44261768843249444,
+    "por_bloque": {
+     "core": {
+      "operaciones": 50,
+      "aciertos": 0.26,
+      "media": 0.02160622993750507,
+      "profit_factor": 1.6864327631452596
+     },
+     "sat": {
+      "operaciones": 191,
+      "aciertos": 0.36649214659685864,
+      "media": 0.029117627754484846,
+      "profit_factor": 1.404149201519329
+     },
+     "mom": {
+      "operaciones": 0
+     }
+    }
+   },
+   "mejor_que_b": true
+  }
+ ],
+ "regla": "C se adopta si su Sharpe es igual o mejor que B en entrenamiento y fuera de muestra"
+}
