@@ -1,0 +1,968 @@
+{
+ "generado": 1790350292,
+ "segundos": 79,
+ "universo": {
+  "n": 42,
+  "monedas": [
+   "AAVE",
+   "ADA",
+   "APT",
+   "ARB",
+   "AVAX",
+   "BCH",
+   "BNB",
+   "BONK",
+   "BTC",
+   "COTI",
+   "DASH",
+   "DOGE",
+   "DOT",
+   "ENA",
+   "ETH",
+   "FET",
+   "FIL",
+   "HBAR",
+   "ICP",
+   "INJ",
+   "JUP",
+   "LDO",
+   "LINK",
+   "LTC",
+   "NEAR",
+   "ONDO",
+   "PENGU",
+   "PEPE",
+   "POL",
+   "PUMP",
+   "QNT",
+   "RAY",
+   "RENDER",
+   "SEI",
+   "SHIB",
+   "SOL",
+   "SUI",
+   "TRUMP",
+   "UNI",
+   "WIF",
+   "XLM",
+   "XRP"
+  ]
+ },
+ "vol_objetivo": 0.501740859982037,
+ "periodos": {
+  "entrenamiento": [
+   "2021-11-01",
+   "2024-10-09"
+  ],
+  "fuera_de_muestra": [
+   "2024-10-09",
+   "2026-09-24"
+  ],
+  "completo": [
+   "2021-11-01",
+   "2026-09-24"
+  ]
+ },
+ "regla_adopcion": "mejor Sharpe y Calmar que la base en entrenamiento Y fuera de muestra",
+ "resultados": [
+  {
+   "nombre": "A · Sistema actual",
+   "cfg": {
+    "tres_bloques": false,
+    "tam_riesgo": false,
+    "vol_target": false,
+    "corte": false,
+    "intradia": false
+   },
+   "entrenamiento": {
+    "total": 0.6783562346132967,
+    "cagr": 0.19260969336729494,
+    "sharpe": 0.7466170298686117,
+    "sortino": 0.7647396117548857,
+    "max_dd": -0.2802223469474422,
+    "operaciones": 139,
+    "aciertos": 0.33093525179856115,
+    "media": 0.04372310331283206,
+    "profit_factor": 1.7512688781520633,
+    "calmar": 0.6873459431963873,
+    "por_bloque": {
+     "core": {
+      "operaciones": 35,
+      "aciertos": 0.22857142857142856,
+      "media": 0.017409887294259754,
+      "profit_factor": 1.646045622619662
+     },
+     "sat": {
+      "operaciones": 104,
+      "aciertos": 0.36538461538461536,
+      "media": 0.05257851254985158,
+      "profit_factor": 1.7651562819469102
+     },
+     "mom": {
+      "operaciones": 0
+     }
+    }
+   },
+   "fuera_de_muestra": {
+    "total": 0.37884051772924376,
+    "cagr": 0.17820389021820904,
+    "sharpe": 0.7107946766044233,
+    "sortino": 0.6636929175372938,
+    "max_dd": -0.3423260650878731,
+    "operaciones": 98,
+    "aciertos": 0.3673469387755102,
+    "media": 0.021514404492076665,
+    "profit_factor": 1.320967246033126,
+    "calmar": 0.5205676937643212,
+    "por_bloque": {
+     "core": {
+      "operaciones": 18,
+      "aciertos": 0.2222222222222222,
+      "media": 0.026705070984188325,
+      "profit_factor": 1.913330451082615
+     },
+     "sat": {
+      "operaciones": 80,
+      "aciertos": 0.4,
+      "media": 0.02034650453135154,
+      "profit_factor": 1.2693730623419006
+     },
+     "mom": {
+      "operaciones": 0
+     }
+    }
+   },
+   "completo": {
+    "total": 1.3625937086832773,
+    "cagr": 0.19185426461853505,
+    "sharpe": 0.7469747208989255,
+    "sortino": 0.74023555497596,
+    "max_dd": -0.34232794174641934,
+    "operaciones": 236,
+    "aciertos": 0.3516949152542373,
+    "media": 0.03584884441610615,
+    "profit_factor": 1.5858128931938285,
+    "calmar": 0.5604399793945298,
+    "por_bloque": {
+     "core": {
+      "operaciones": 53,
+      "aciertos": 0.22641509433962265,
+      "media": 0.020566742132348697,
+      "profit_factor": 1.7417745439042078
+     },
+     "sat": {
+      "operaciones": 183,
+      "aciertos": 0.3879781420765027,
+      "media": 0.04027480846550038,
+      "profit_factor": 1.5681459026751128
+     },
+     "mom": {
+      "operaciones": 0
+     }
+    }
+   }
+  },
+  {
+   "nombre": "B · + tamaño por riesgo",
+   "cfg": {
+    "tres_bloques": false,
+    "tam_riesgo": true,
+    "vol_target": false,
+    "corte": false,
+    "intradia": false
+   },
+   "entrenamiento": {
+    "total": 0.6128979237889676,
+    "cagr": 0.17657920148783246,
+    "sharpe": 0.7702475609730886,
+    "sortino": 0.7623608349068611,
+    "max_dd": -0.24528077908671986,
+    "operaciones": 140,
+    "aciertos": 0.32857142857142857,
+    "media": 0.04297149872286464,
+    "profit_factor": 1.7380553375281067,
+    "calmar": 0.7199063952149397,
+    "por_bloque": {
+     "core": {
+      "operaciones": 35,
+      "aciertos": 0.22857142857142856,
+      "media": 0.017409887294259768,
+      "profit_factor": 1.6460456226196627
+     },
+     "sat": {
+      "operaciones": 105,
+      "aciertos": 0.3619047619047619,
+      "media": 0.05149203586573293,
+      "profit_factor": 1.7500951999694305
+     },
+     "mom": {
+      "operaciones": 0
+     }
+    }
+   },
+   "fuera_de_muestra": {
+    "total": 0.29993217077678924,
+    "cagr": 0.14328713933116188,
+    "sharpe": 0.6767549670800629,
+    "sortino": 0.6148067739269776,
+    "max_dd": -0.2706762663170106,
+    "operaciones": 99,
+    "aciertos": 0.36363636363636365,
+    "media": 0.020153542906921465,
+    "profit_factor": 1.2985870142370721,
+    "calmar": 0.5293672078487549,
+    "por_bloque": {
+     "core": {
+      "operaciones": 18,
+      "aciertos": 0.2222222222222222,
+      "media": 0.026705070984188357,
+      "profit_factor": 1.9133304510826163
+     },
+     "sat": {
+      "operaciones": 81,
+      "aciertos": 0.3950617283950617,
+      "media": 0.018697647778639935,
+      "profit_factor": 1.246028245641571
+     },
+     "mom": {
+      "operaciones": 0
+     }
+    }
+   },
+   "completo": {
+    "total": 1.1333465778424063,
+    "cagr": 0.16727765074327516,
+    "sharpe": 0.7482371275940666,
+    "sortino": 0.7186802145578369,
+    "max_dd": -0.2706767390410272,
+    "operaciones": 238,
+    "aciertos": 0.3487394957983193,
+    "media": 0.034813507775126686,
+    "profit_factor": 1.5668578331854348,
+    "calmar": 0.6179978794480765,
+    "por_bloque": {
+     "core": {
+      "operaciones": 53,
+      "aciertos": 0.22641509433962265,
+      "media": 0.020566742132348697,
+      "profit_factor": 1.7417745439042078
+     },
+     "sat": {
+      "operaciones": 185,
+      "aciertos": 0.3837837837837838,
+      "media": 0.038895013607922545,
+      "profit_factor": 1.547306964115657
+     },
+     "mom": {
+      "operaciones": 0
+     }
+    }
+   },
+   "mejora_ambos": false
+  },
+  {
+   "nombre": "C · + control de volatilidad",
+   "cfg": {
+    "tres_bloques": false,
+    "tam_riesgo": false,
+    "vol_target": true,
+    "corte": false,
+    "intradia": false
+   },
+   "entrenamiento": {
+    "total": 0.7063055485157053,
+    "cagr": 0.19932874135257883,
+    "sharpe": 0.7814810606874809,
+    "sortino": 0.8004793788148601,
+    "max_dd": -0.2636474482802649,
+    "operaciones": 140,
+    "aciertos": 0.32857142857142857,
+    "media": 0.04297149872286465,
+    "profit_factor": 1.7380553375281067,
+    "calmar": 0.7560427481956382,
+    "por_bloque": {
+     "core": {
+      "operaciones": 35,
+      "aciertos": 0.22857142857142856,
+      "media": 0.017409887294259744,
+      "profit_factor": 1.6460456226196618
+     },
+     "sat": {
+      "operaciones": 105,
+      "aciertos": 0.3619047619047619,
+      "media": 0.05149203586573294,
+      "profit_factor": 1.7500951999694307
+     },
+     "mom": {
+      "operaciones": 0
+     }
+    }
+   },
+   "fuera_de_muestra": {
+    "total": 0.38704973081045324,
+    "cagr": 0.1817796086841157,
+    "sharpe": 0.7255066355447053,
+    "sortino": 0.6814794397998268,
+    "max_dd": -0.3312796431514763,
+    "operaciones": 98,
+    "aciertos": 0.3673469387755102,
+    "media": 0.02151440449207668,
+    "profit_factor": 1.3209672460331263,
+    "calmar": 0.5487195257602886,
+    "por_bloque": {
+     "core": {
+      "operaciones": 18,
+      "aciertos": 0.2222222222222222,
+      "media": 0.026705070984188298,
+      "profit_factor": 1.9133304510826135
+     },
+     "sat": {
+      "operaciones": 80,
+      "aciertos": 0.4,
+      "media": 0.020346504531351565,
+      "profit_factor": 1.269373062341901
+     },
+     "mom": {
+      "operaciones": 0
+     }
+    }
+   },
+   "completo": {
+    "total": 1.416232382190055,
+    "cagr": 0.19732882264887097,
+    "sharpe": 0.7738942107493869,
+    "sortino": 0.767934545296339,
+    "max_dd": -0.3312822347235851,
+    "operaciones": 237,
+    "aciertos": 0.350210970464135,
+    "media": 0.035438083303453355,
+    "profit_factor": 1.5790883285745216,
+    "calmar": 0.5956516890002206,
+    "por_bloque": {
+     "core": {
+      "operaciones": 53,
+      "aciertos": 0.22641509433962265,
+      "media": 0.020566742132348693,
+      "profit_factor": 1.7417745439042083
+     },
+     "sat": {
+      "operaciones": 184,
+      "aciertos": 0.3858695652173913,
+      "media": 0.03972167614078241,
+      "profit_factor": 1.5607465508959943
+     },
+     "mom": {
+      "operaciones": 0
+     }
+    }
+   },
+   "mejora_ambos": true
+  },
+  {
+   "nombre": "D · + cortacircuitos 20 %",
+   "cfg": {
+    "tres_bloques": false,
+    "tam_riesgo": false,
+    "vol_target": false,
+    "corte": true,
+    "intradia": false
+   },
+   "entrenamiento": {
+    "total": 0.8091186152214553,
+    "cagr": 0.22343805625063173,
+    "sharpe": 0.8390113994927866,
+    "sortino": 0.8273591847043588,
+    "max_dd": -0.21439355263650706,
+    "operaciones": 128,
+    "aciertos": 0.3515625,
+    "media": 0.05238491421840455,
+    "profit_factor": 1.906766830857076,
+    "calmar": 1.0421864533839744,
+    "por_bloque": {
+     "core": {
+      "operaciones": 32,
+      "aciertos": 0.25,
+      "media": 0.022715695433223063,
+      "profit_factor": 1.8804134948732707
+     },
+     "sat": {
+      "operaciones": 96,
+      "aciertos": 0.3854166666666667,
+      "media": 0.062274653813465045,
+      "profit_factor": 1.9100790685459268
+     },
+     "mom": {
+      "operaciones": 0
+     }
+    }
+   },
+   "fuera_de_muestra": {
+    "total": 0.21528284433108014,
+    "cagr": 0.10465562337126744,
+    "sharpe": 0.6319907153016691,
+    "sortino": 0.2946986520060876,
+    "max_dd": -0.22352331279186155,
+    "operaciones": 29,
+    "aciertos": 0.3448275862068966,
+    "media": 0.07384022311123589,
+    "profit_factor": 2.0148250108821757,
+    "calmar": 0.4682089848440987,
+    "por_bloque": {
+     "core": {
+      "operaciones": 5,
+      "aciertos": 0.2,
+      "media": 0.021213984467463965,
+      "profit_factor": 1.4459084336976005
+     },
+     "sat": {
+      "operaciones": 24,
+      "aciertos": 0.375,
+      "media": 0.08480402282868837,
+      "profit_factor": 2.087108721196946
+     },
+     "mom": {
+      "operaciones": 0
+     }
+    }
+   },
+   "completo": {
+    "total": 0.8091186152214553,
+    "cagr": 0.12864922567342485,
+    "sharpe": 0.6497055255939637,
+    "sortino": 0.4965080565927164,
+    "max_dd": -0.21439355263650706,
+    "operaciones": 128,
+    "aciertos": 0.3515625,
+    "media": 0.05238491421840455,
+    "profit_factor": 1.906766830857076,
+    "calmar": 0.6000610750246899,
+    "por_bloque": {
+     "core": {
+      "operaciones": 32,
+      "aciertos": 0.25,
+      "media": 0.022715695433223063,
+      "profit_factor": 1.8804134948732707
+     },
+     "sat": {
+      "operaciones": 96,
+      "aciertos": 0.3854166666666667,
+      "media": 0.062274653813465045,
+      "profit_factor": 1.9100790685459268
+     },
+     "mom": {
+      "operaciones": 0
+     }
+    }
+   },
+   "mejora_ambos": false
+  },
+  {
+   "nombre": "E · Riesgo completo (B+C+D)",
+   "cfg": {
+    "tres_bloques": false,
+    "tam_riesgo": true,
+    "vol_target": true,
+    "corte": true,
+    "intradia": false
+   },
+   "entrenamiento": {
+    "total": 0.6758025766679878,
+    "cagr": 0.19199212052524173,
+    "sharpe": 0.8454416448075728,
+    "sortino": 0.8325016928138542,
+    "max_dd": -0.20795563383719928,
+    "operaciones": 136,
+    "aciertos": 0.3382352941176471,
+    "media": 0.04640448491552825,
+    "profit_factor": 1.8033195782650107,
+    "calmar": 0.9232359661654813,
+    "por_bloque": {
+     "core": {
+      "operaciones": 35,
+      "aciertos": 0.22857142857142856,
+      "media": 0.017409887294259765,
+      "profit_factor": 1.6460456226196627
+     },
+     "sat": {
+      "operaciones": 101,
+      "aciertos": 0.37623762376237624,
+      "media": 0.05645211775458169,
+      "profit_factor": 1.8247777618200423
+     },
+     "mom": {
+      "operaciones": 0
+     }
+    }
+   },
+   "fuera_de_muestra": {
+    "total": 0.10071708564973747,
+    "cagr": 0.05020724901005669,
+    "sharpe": 0.4155598000274358,
+    "sortino": 0.21258477605126344,
+    "max_dd": -0.20207091703752667,
+    "operaciones": 34,
+    "aciertos": 0.29411764705882354,
+    "media": 0.04930330334783839,
+    "profit_factor": 1.6509600348037818,
+    "calmar": 0.24846350848565052,
+    "por_bloque": {
+     "core": {
+      "operaciones": 7,
+      "aciertos": 0.14285714285714285,
+      "media": 0.005347319677636829,
+      "profit_factor": 1.1221197918606167
+     },
+     "sat": {
+      "operaciones": 27,
+      "aciertos": 0.3333333333333333,
+      "media": 0.06069929911418695,
+      "profit_factor": 1.7224112626909243
+     },
+     "mom": {
+      "operaciones": 0
+     }
+    }
+   },
+   "completo": {
+    "total": 0.6758025766679878,
+    "cagr": 0.11114967211152482,
+    "sharpe": 0.6546810352476853,
+    "sortino": 0.49959413668303443,
+    "max_dd": -0.20795563383719928,
+    "operaciones": 136,
+    "aciertos": 0.3382352941176471,
+    "media": 0.04640448491552825,
+    "profit_factor": 1.8033195782650107,
+    "calmar": 0.5344874291722231,
+    "por_bloque": {
+     "core": {
+      "operaciones": 35,
+      "aciertos": 0.22857142857142856,
+      "media": 0.017409887294259765,
+      "profit_factor": 1.6460456226196627
+     },
+     "sat": {
+      "operaciones": 101,
+      "aciertos": 0.37623762376237624,
+      "media": 0.05645211775458169,
+      "profit_factor": 1.8247777618200423
+     },
+     "mom": {
+      "operaciones": 0
+     }
+    }
+   },
+   "mejora_ambos": false
+  },
+  {
+   "nombre": "F · Entrada intradía",
+   "cfg": {
+    "tres_bloques": false,
+    "tam_riesgo": false,
+    "vol_target": false,
+    "corte": false,
+    "intradia": true
+   },
+   "entrenamiento": {
+    "total": 0.013486254793212415,
+    "cagr": 0.004567328244037494,
+    "sharpe": 0.15994920422871325,
+    "sortino": 0.1511281540631151,
+    "max_dd": -0.39560798672445063,
+    "operaciones": 180,
+    "aciertos": 0.28888888888888886,
+    "media": 0.0034436367363979282,
+    "profit_factor": 1.0501606339126084,
+    "calmar": 0.011545086037958924,
+    "por_bloque": {
+     "core": {
+      "operaciones": 35,
+      "aciertos": 0.22857142857142856,
+      "media": 0.017409887294259768,
+      "profit_factor": 1.6460456226196631
+     },
+     "sat": {
+      "operaciones": 145,
+      "aciertos": 0.30344827586206896,
+      "media": 7.247280863817372e-05,
+      "profit_factor": 1.0009206566149387
+     },
+     "mom": {
+      "operaciones": 0
+     }
+    }
+   },
+   "fuera_de_muestra": {
+    "total": 0.08160829454768082,
+    "cagr": 0.0408601515639444,
+    "sharpe": 0.2837373752567954,
+    "sortino": 0.266112397076525,
+    "max_dd": -0.39454927928181627,
+    "operaciones": 128,
+    "aciertos": 0.28125,
+    "media": -0.005963435930880896,
+    "profit_factor": 0.9255660055929142,
+    "calmar": 0.10356159220039801,
+    "por_bloque": {
+     "core": {
+      "operaciones": 18,
+      "aciertos": 0.2222222222222222,
+      "media": 0.02670507098418834,
+      "profit_factor": 1.9133304510826155
+     },
+     "sat": {
+      "operaciones": 110,
+      "aciertos": 0.2909090909090909,
+      "media": -0.011309191607892226,
+      "profit_factor": 0.8721295508158761
+     },
+     "mom": {
+      "operaciones": 0
+     }
+    }
+   },
+   "completo": {
+    "total": 0.09619513959440251,
+    "cagr": 0.01892603321677888,
+    "sharpe": 0.21046040294560697,
+    "sortino": 0.1980054192512128,
+    "max_dd": -0.4587344422962647,
+    "operaciones": 308,
+    "aciertos": 0.2857142857142857,
+    "media": -0.00046579606039327,
+    "profit_factor": 0.9936554586349959,
+    "calmar": 0.04125705739913872,
+    "por_bloque": {
+     "core": {
+      "operaciones": 53,
+      "aciertos": 0.22641509433962265,
+      "media": 0.0205667421323487,
+      "profit_factor": 1.7417745439042083
+     },
+     "sat": {
+      "operaciones": 255,
+      "aciertos": 0.2980392156862745,
+      "media": -0.004837264782806307,
+      "profit_factor": 0.9416587317738626
+     },
+     "mom": {
+      "operaciones": 0
+     }
+    }
+   },
+   "mejora_ambos": false
+  },
+  {
+   "nombre": "G · Riesgo completo + intradía",
+   "cfg": {
+    "tres_bloques": false,
+    "tam_riesgo": true,
+    "vol_target": true,
+    "corte": true,
+    "intradia": true
+   },
+   "entrenamiento": {
+    "total": -0.15705824708141225,
+    "cagr": -0.0564634576115467,
+    "sharpe": -0.35242995337751426,
+    "sortino": -0.23288145827461174,
+    "max_dd": -0.2044397155138542,
+    "operaciones": 74,
+    "aciertos": 0.2702702702702703,
+    "media": -0.016220378416086517,
+    "profit_factor": 0.7129263507986601,
+    "calmar": -0.27618634407520665,
+    "por_bloque": {
+     "core": {
+      "operaciones": 21,
+      "aciertos": 0.19047619047619047,
+      "media": -0.014985260444073709,
+      "profit_factor": 0.4840700951017621
+     },
+     "sat": {
+      "operaciones": 53,
+      "aciertos": 0.3018867924528302,
+      "media": -0.01670976478235574,
+      "profit_factor": 0.7520137731361715
+     },
+     "mom": {
+      "operaciones": 0
+     }
+    }
+   },
+   "fuera_de_muestra": {
+    "total": 0.06485022419186359,
+    "cagr": 0.03259616226291828,
+    "sharpe": 0.2903190518824648,
+    "sortino": 0.15080965178042569,
+    "max_dd": -0.2128301784004356,
+    "operaciones": 40,
+    "aciertos": 0.25,
+    "media": 0.024843340400911178,
+    "profit_factor": 1.2855664070679678,
+    "calmar": 0.1531557343413455,
+    "por_bloque": {
+     "core": {
+      "operaciones": 6,
+      "aciertos": 0.16666666666666666,
+      "media": 0.012569738128090516,
+      "profit_factor": 1.2808615711572535
+     },
+     "sat": {
+      "operaciones": 34,
+      "aciertos": 0.2647058823529412,
+      "media": 0.02700927021376188,
+      "profit_factor": 1.2859598147905371
+     },
+     "mom": {
+      "operaciones": 0
+     }
+    }
+   },
+   "completo": {
+    "total": -0.15705824708141225,
+    "cagr": -0.03427736341883958,
+    "sharpe": -0.27299793941690614,
+    "sortino": -0.13975492434488723,
+    "max_dd": -0.2044397155138542,
+    "operaciones": 74,
+    "aciertos": 0.2702702702702703,
+    "media": -0.016220378416086517,
+    "profit_factor": 0.7129263507986601,
+    "calmar": -0.16766489491870143,
+    "por_bloque": {
+     "core": {
+      "operaciones": 21,
+      "aciertos": 0.19047619047619047,
+      "media": -0.014985260444073709,
+      "profit_factor": 0.4840700951017621
+     },
+     "sat": {
+      "operaciones": 53,
+      "aciertos": 0.3018867924528302,
+      "media": -0.01670976478235574,
+      "profit_factor": 0.7520137731361715
+     },
+     "mom": {
+      "operaciones": 0
+     }
+    }
+   },
+   "mejora_ambos": false
+  },
+  {
+   "nombre": "H · Tres bloques (con momentum)",
+   "cfg": {
+    "tres_bloques": true,
+    "tam_riesgo": false,
+    "vol_target": false,
+    "corte": false,
+    "intradia": false
+   },
+   "entrenamiento": {
+    "total": 0.4733139530888886,
+    "cagr": 0.1409027707480257,
+    "sharpe": 0.5287202658367488,
+    "sortino": 0.623595799009091,
+    "max_dd": -0.4789391482488151,
+    "operaciones": 288,
+    "aciertos": 0.3611111111111111,
+    "media": 0.03217487510772441,
+    "profit_factor": 1.4499972813724789,
+    "calmar": 0.29419764757844535,
+    "por_bloque": {
+     "core": {
+      "operaciones": 35,
+      "aciertos": 0.22857142857142856,
+      "media": 0.017409887294259727,
+      "profit_factor": 1.6460456226196605
+     },
+     "sat": {
+      "operaciones": 104,
+      "aciertos": 0.3557692307692308,
+      "media": 0.04726770994897457,
+      "profit_factor": 1.6779703617553512
+     },
+     "mom": {
+      "operaciones": 149,
+      "aciertos": 0.3959731543624161,
+      "media": 0.025108564704913995,
+      "profit_factor": 1.3017556985787513
+     }
+    }
+   },
+   "fuera_de_muestra": {
+    "total": 0.9663601141908369,
+    "cagr": 0.4122510616736148,
+    "sharpe": 1.0471860959904162,
+    "sortino": 1.2125450068461472,
+    "max_dd": -0.45080889690593096,
+    "operaciones": 195,
+    "aciertos": 0.37948717948717947,
+    "media": 0.04818413607166249,
+    "profit_factor": 1.6383794918617653,
+    "calmar": 0.9144696666437754,
+    "por_bloque": {
+     "core": {
+      "operaciones": 18,
+      "aciertos": 0.2222222222222222,
+      "media": 0.026705070984188315,
+      "profit_factor": 1.913330451082613
+     },
+     "sat": {
+      "operaciones": 80,
+      "aciertos": 0.4,
+      "media": 0.02034650453135154,
+      "profit_factor": 1.2693730623419006
+     },
+     "mom": {
+      "operaciones": 97,
+      "aciertos": 0.3917525773195876,
+      "media": 0.0751288133376358,
+      "profit_factor": 1.8942325215514557
+     }
+    }
+   },
+   "completo": {
+    "total": 1.6461950510910475,
+    "cagr": 0.21975744246144457,
+    "sharpe": 0.6961933840617206,
+    "sortino": 0.8006076967590845,
+    "max_dd": -0.4789391482488151,
+    "operaciones": 474,
+    "aciertos": 0.3755274261603376,
+    "media": 0.0366692407095747,
+    "profit_factor": 1.5106570696384034,
+    "calmar": 0.4588420956293966,
+    "por_bloque": {
+     "core": {
+      "operaciones": 53,
+      "aciertos": 0.22641509433962265,
+      "media": 0.020566742132348687,
+      "profit_factor": 1.7417745439042078
+     },
+     "sat": {
+      "operaciones": 183,
+      "aciertos": 0.3770491803278688,
+      "media": 0.037097050364804825,
+      "profit_factor": 1.5205626654184385
+     },
+     "mom": {
+      "operaciones": 238,
+      "aciertos": 0.40756302521008403,
+      "media": 0.03992614515363297,
+      "profit_factor": 1.4866479926017244
+     }
+    }
+   },
+   "mejora_ambos": false
+  },
+  {
+   "nombre": "I · Tres bloques + riesgo completo",
+   "cfg": {
+    "tres_bloques": true,
+    "tam_riesgo": true,
+    "vol_target": true,
+    "corte": true,
+    "intradia": false
+   },
+   "entrenamiento": {
+    "total": -0.1352189309084879,
+    "cagr": -0.04821793933149443,
+    "sharpe": -0.2255778053130582,
+    "sortino": -0.16742141640409758,
+    "max_dd": -0.21404908408065226,
+    "operaciones": 126,
+    "aciertos": 0.30158730158730157,
+    "media": -0.007733140876952118,
+    "profit_factor": 0.8916394788081355,
+    "calmar": -0.22526580545108166,
+    "por_bloque": {
+     "core": {
+      "operaciones": 21,
+      "aciertos": 0.19047619047619047,
+      "media": -0.014985260444073762,
+      "profit_factor": 0.48407009510176136
+     },
+     "sat": {
+      "operaciones": 41,
+      "aciertos": 0.3170731707317073,
+      "media": 0.03660755488870545,
+      "profit_factor": 1.5653524949432829
+     },
+     "mom": {
+      "operaciones": 64,
+      "aciertos": 0.328125,
+      "media": -0.03375929736886471,
+      "profit_factor": 0.6227492343033442
+     }
+    }
+   },
+   "fuera_de_muestra": {
+    "total": 0.2551890019240115,
+    "cagr": 0.12302641888680155,
+    "sharpe": 0.729571945464487,
+    "sortino": 0.45394525331918567,
+    "max_dd": -0.23273031060329308,
+    "operaciones": 69,
+    "aciertos": 0.37681159420289856,
+    "media": 0.08385951864596068,
+    "profit_factor": 2.004840457504727,
+    "calmar": 0.5286222433506294,
+    "por_bloque": {
+     "core": {
+      "operaciones": 6,
+      "aciertos": 0.16666666666666666,
+      "media": 0.01256973812809048,
+      "profit_factor": 1.2808615711572524
+     },
+     "sat": {
+      "operaciones": 27,
+      "aciertos": 0.3333333333333333,
+      "media": 0.06069929911418698,
+      "profit_factor": 1.7224112626909245
+     },
+     "mom": {
+      "operaciones": 36,
+      "aciertos": 0.4444444444444444,
+      "media": 0.11311131338110265,
+      "profit_factor": 2.2640952818813482
+     }
+    }
+   },
+   "completo": {
+    "total": -0.1352189309084879,
+    "cagr": -0.029221592007693253,
+    "sharpe": -0.17474323251910337,
+    "sortino": -0.10047157707024425,
+    "max_dd": -0.21404908408065226,
+    "operaciones": 126,
+    "aciertos": 0.30158730158730157,
+    "media": -0.007733140876952118,
+    "profit_factor": 0.8916394788081355,
+    "calmar": -0.13651818288875628,
+    "por_bloque": {
+     "core": {
+      "operaciones": 21,
+      "aciertos": 0.19047619047619047,
+      "media": -0.014985260444073762,
+      "profit_factor": 0.48407009510176136
+     },
+     "sat": {
+      "operaciones": 41,
+      "aciertos": 0.3170731707317073,
+      "media": 0.03660755488870545,
+      "profit_factor": 1.5653524949432829
+     },
+     "mom": {
+      "operaciones": 64,
+      "aciertos": 0.328125,
+      "media": -0.03375929736886471,
+      "profit_factor": 0.6227492343033442
+     }
+    }
+   },
+   "mejora_ambos": false
+  }
+ ]
+}
