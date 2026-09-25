@@ -1,0 +1,44 @@
+name: Vigilante del radar
+
+# Camino independiente del radar: si lleva más de 45 min sin publicar, lo relanza y te avisa.
+on:
+  schedule:
+    - cron: "7,37 * * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  vigilar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Comprobar que el radar está vivo
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          PANEL_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+        run: |
+          ACT=$(curl -sf "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/data/radar.json?t=$(date +%s)" \
+                | python3 -c "import sys, json; print(json.load(sys.stdin)['actualizado'])" || echo 0)
+          EDAD=$(( ( $(date +%s) - ACT ) / 60 ))
+          echo "Última revisión del radar: hace ${EDAD} min"
+          if [ "$EDAD" -lt 45 ]; then exit 0; fi
+          ACTIVAS=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow varsel.yml --limit 20 --json status \
+                    --jq '[.[] | select(.status != "completed")] | length')
+          if [ "$ACTIVAS" = "0" ]; then
+            gh workflow run varsel.yml --repo "$GITHUB_REPOSITORY" --ref main
+            ACCION="Lo he relanzado automáticamente."
+          else
+            ACCION="Hay una ejecución en marcha que no publica: revisa Actions."
+          fi
+          echo "$ACCION"
+          # aviso la primera vez (45-80 min) y después cada ~3 h mientras siga parado
+          if [ -n "$NTFY_TOPIC" ] && { [ "$EDAD" -lt 80 ] || [ $(( EDAD % 180 )) -lt 30 ]; }; then
+            jq -n --arg t "$NTFY_TOPIC" --arg m "Sin revisiones desde hace ${EDAD} min. ${ACCION} Los stops NO se vigilan mientras tanto." \
+                  --arg c "$PANEL_URL" \
+                  '{topic:$t, title:"⛔ Radar parado", message:$m, priority:5, tags:["rotating_light"], click:$c}' \
+              | curl -s -H "Content-Type: application/json" -d @- https://ntfy.sh > /dev/null
+          fi
