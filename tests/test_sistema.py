@@ -78,5 +78,19 @@ class Gestion(unittest.TestCase):
         self.assertFalse(math.isnan(r["dist"]))
 
 
+class Volatilidad(unittest.TestCase):
+    def test_factor(self):
+        tranquila = velas([100 * (1.001 if i % 2 else 1.0) for i in range(60)])     # ±0,1 % diario
+        self.assertEqual(sis.factor_volatilidad(tranquila)[0], 1.0)
+        import random
+        random.seed(3)
+        c = [100.0]
+        for _ in range(60):
+            c.append(c[-1] * math.exp(random.gauss(0, 0.06)))      # ~115 % anual
+        f, vol = sis.factor_volatilidad(velas(c))
+        self.assertGreater(vol, 0.8)
+        self.assertAlmostEqual(f, sis.VOL_OBJETIVO / vol)
+
+
 if __name__ == "__main__":
     unittest.main()
