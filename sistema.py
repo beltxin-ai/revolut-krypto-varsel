@@ -15,6 +15,8 @@ SATÉLITE (50 % del capital) · Ruptura Donchian 55/20 en altcoins líquidas de 
   - Stop inicial: cierre − 2 ATR(14). Trailing: máximo desde la entrada − 3 ATR.
   - Salida: cierre por debajo del mínimo de los 20 días anteriores, o precio en vivo ≤ stop.
 """
+import math
+
 import indicadores as ind
 
 PESO_NUCLEO = 0.25          # por moneda (BTC, ETH)
@@ -165,3 +167,23 @@ def proteccion_horaria(v1h, nivel):
         return False
     media = sum(v1h["v"][-25:-1]) / 24
     return v1h["c"][-1] < nivel and media > 0 and v1h["v"][-1] > VOL_X_PROTECCION * media
+
+
+# ------------------------------------------------------------------ control de volatilidad (VALIDADO, fase 2)
+# Única mejora que superó el filtro de investigacion2.py: mejor Sharpe y Calmar en entrenamiento Y fuera de muestra.
+# Las entradas nuevas se escalan por min(1, VOL_OBJETIVO / volatilidad de BTC a 30 días).
+VOL_OBJETIVO = 0.50          # mediana de la volatilidad anualizada de BTC en el periodo de entrenamiento (50,2 %)
+
+
+def volatilidad_btc(v_btc, n=30):
+    c = v_btc["c"]
+    if len(c) < n + 1:
+        return None
+    r = [math.log(c[i] / c[i - 1]) for i in range(len(c) - n, len(c))]
+    m = sum(r) / n
+    return math.sqrt(sum((x - m) ** 2 for x in r) / n) * math.sqrt(365)
+
+
+def factor_volatilidad(v_btc):
+    vol = volatilidad_btc(v_btc)
+    return (min(1.0, VOL_OBJETIVO / vol) if vol else 1.0), vol
