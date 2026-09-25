@@ -14,12 +14,26 @@ Workflow «Investigación de estrategias»: 12 variantes + 3 referencias sobre l
 
 Limitaciones: sesgo de supervivencia, un solo mercado bajista grande en la muestra, spread actual aplicado a todo el periodo, caídas máximas de −26 % (núcleo) y −46 % (satélite) fuera de muestra.
 
+## Fiabilidad operativa
+
+- **Vigilante** (`vigilante.yml`, cada 30 min): si el radar lleva más de 45 min sin publicar, lo relanza y avisa «⛔ Radar parado».
+- **Fuente de reserva**: si Binance falla, las velas se piden a OKX.
+- **Parte diario** al móvil (~07:00 hora de Noruega): revisiones hechas, fuentes, régimen, cartera y señales.
+- **Pruebas** (`pruebas.yml`) en cada cambio de `main`.
+
+## Fases 2 y 3 (`investigacion2.py`)
+
+Nueve variantes sobre la cartera completa. Solo se adopta lo que mejora Sharpe y Calmar en entrenamiento **y** fuera de muestra:
+adoptado el **control de volatilidad** (entradas × min(1, 50 % / vol. BTC 30 d)). Descartados: entrada intradía, cortacircuitos,
+momentum como tercer bloque y el tamaño por riesgo (este último queda como sugerencia opcional). Resultados en la rama `investigacion2`.
+
 ## Fuentes
 
 | Fuente | Uso |
 |---|---|
 | Revolut X API pública (EEA) | Universo, precio bid/ask, spread y volumen |
-| Binance (data-api.binance.vision) | Velas diarias (validadas contra Revolut X, < 3 %) |
+| Binance (data-api.binance.vision) | Velas diarias y horarias (validadas contra Revolut X, < 3 %) |
+| OKX | Reserva si Binance falla |
 
 ## Notificaciones
 
