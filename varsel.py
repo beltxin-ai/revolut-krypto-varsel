@@ -227,6 +227,7 @@ def main():
     if "BTC" not in datos:
         raise RuntimeError("Sin velas diarias de BTC: no se puede calcular el régimen")
     reg = sis.regimen_btc(datos["BTC"], series["BTC"])
+    fvol, vol_btc = sis.factor_volatilidad(datos["BTC"])     # validado: escala las entradas nuevas
     dia = dia_utc(datos["BTC"]["t"][-1])        # última vela diaria cerrada
     eventos = []
 
@@ -243,7 +244,7 @@ def main():
                 if c:
                     eventos.append(("salida", c))
             elif t not in est["nucleo"] and dentro:
-                p = comprar(est, "nucleo", t, rx, sis.PESO_NUCLEO, {"stop": None, "sistema": "Núcleo"})
+                p = comprar(est, "nucleo", t, rx, sis.PESO_NUCLEO * fvol, {"stop": None, "sistema": "Núcleo"})
                 if p:
                     eventos.append(("entrada", p))
         # satélite: trailing y salidas por mínimo de 20 días
@@ -263,7 +264,7 @@ def main():
                 if rx[t]["bid"] <= cand["stop"]:
                     continue    # desde el cierre ya ha caído hasta el stop: la ruptura ha fallado
                 # niveles en USDT de Binance ≈ USD de Revolut X (validado arriba, < 3 % de diferencia)
-                p = comprar(est, "satelite", t, rx, sis.PESO_SATELITE,
+                p = comprar(est, "satelite", t, rx, sis.PESO_SATELITE * fvol,
                             {"stop": cand["stop"], "stop_inicial": cand["stop"],
                              "sistema": "Satélite", "fuerza": cand["fuerza"],
                              "nivel_ruptura": series[t]["max55"][-1]})
@@ -435,6 +436,7 @@ def main():
                     "caja": est["caja"], "resumen": resumen, "curva": curva, "cerradas": est["cerradas"][:100]},
         "candidatas_hoy": candidatas[:10], "cerca_de_ruptura": cerca[:15],
         "eventos": [{"tipo": tp, "ticker": p["ticker"]} for tp, p in eventos],
+        "volatilidad": {"btc_30d": vol_btc, "objetivo": sis.VOL_OBJETIVO, "factor": fvol},
         "senales": est["senales"][:30], "ordenes": ordenes, "alertas_h": alertas, "btc_1h": btc_1h,
         "exposicion": exposicion, "gestion": {"riesgo_max": sis.RIESGO_MAX, "exposicion_max": sis.EXPOSICION_MAX,
                                               "caida_btc_1h": sis.CAIDA_BTC_1H, "vol_x": sis.VOL_X_PROTECCION}, "latidos": est["latidos"], "revisiones_24h": revis_24h, "intervalo_s": int(os.getenv("INTERVALO_SEG", "900")),
