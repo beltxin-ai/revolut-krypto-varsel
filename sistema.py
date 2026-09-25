@@ -1,7 +1,7 @@
 """
 Sistema de trading validado (ver investigacion.py y la pestaña «Evidencia» del panel).
 
-Dos bloques, ambos con velas DIARIAS cerradas (00:00 UTC):
+Dos bloques, ambos con velas DIARIAS cerradas a las 06:00 UTC (08:00 en Noruega en verano, 07:00 en invierno):
 
 NÚCLEO (50 % del capital) · Tendencia BTC y ETH
   - Dentro si cierre > SMA50 y SMA50 > SMA200. Fuera en caso contrario.
