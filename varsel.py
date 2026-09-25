@@ -4,7 +4,7 @@ Radar Cripto · motor para Revolut X. Se ejecuta cada 15 minutos.
 
 - Precios en vivo, spread y volumen: Revolut X (pares USD, región EEA).
 - Velas diarias para las señales: Binance (validadas contra el precio de Revolut X).
-- Señales (sistema.py) al cierre diario UTC; stops vigilados cada 15 min con el bid de Revolut X.
+- Señales (sistema.py) al cierre diario de las 06:00 UTC (08:00 en Noruega en verano); stops vigilados cada 15 min con el bid de Revolut X.
 - Cartera modelo con ejecución realista: compra al ask, venta al bid, comisión 0,09 %.
 - Notificaciones: ENTRADA y SALIDA / STOP.
 """
@@ -32,6 +32,7 @@ MAX_SPREAD = float(os.getenv("MAX_SPREAD", "0.006"))
 ESTABLES = {"USDC", "USDT", "EURC", "DAI", "USDE", "PYUSD", "RLUSD", "FDUSD", "TUSD", "USDS", "USD1"}
 D1 = 86400 * 1000
 H1 = 3600 * 1000
+HORA_CIERRE = int(os.getenv("HORA_CIERRE_UTC", "6"))   # validado (investigacion3.py): día de 06:00 a 06:00 UTC
 log = print
 
 
@@ -110,10 +111,20 @@ RESPALDO = {"okx": 0, "fallos": 0}     # contador de uso de la fuente de reserva
 
 
 def velas(t, marco, n, ahora_ms):
-    """Velas cerradas: Binance y, si falla, OKX (fuente de reserva)."""
+    """Velas cerradas: Binance y, si falla, OKX (fuente de reserva).
+    Las diarias cierran a HORA_CIERRE UTC; OKX no ofrece esa hora, así que para ellas no hay reserva
+    (se mantienen las de la caché hasta que Binance responda)."""
     try:
+        if marco == "1d" and HORA_CIERRE:
+            v = f.solo_cerradas(f.binance_velas(f"{t}USDT", "1d", n, tz=-HORA_CIERRE), ahora_ms)
+            if v["t"] and v["t"][-1] % D1 != HORA_CIERRE * H1:
+                raise RuntimeError(f"Binance no aplicó el cierre de las {HORA_CIERRE}:00 UTC")
+            return v
         return f.solo_cerradas(f.binance_velas(f"{t}USDT", marco, n), ahora_ms)
     except Exception as e1:  # noqa: BLE001
+        if marco == "1d" and HORA_CIERRE:
+            RESPALDO["fallos"] += 1
+            raise
         try:
             v = f.solo_cerradas(f.okx_velas(f"{t}-USDT", marco, n), ahora_ms)
             RESPALDO["okx"] += 1
@@ -410,7 +421,7 @@ def main():
         fuentes["OKX (reserva)"] = f"usada {RESPALDO['okx']} veces" + (f" · {RESPALDO['fallos']} fallos" if RESPALDO["fallos"] else "")
     revis_24h = sum(1 for x in est["latidos"] if t0 - x <= 86400)
     hoy = time.strftime("%Y-%m-%d", time.gmtime(t0))
-    if time.gmtime(t0).tm_hour >= 5 and est.get("ult_parte") != hoy:
+    if time.gmtime(t0).tm_hour >= HORA_CIERRE and est.get("ult_parte") != hoy:
         est["ult_parte"] = hoy
         sen24 = [f"{'🟢' if x['tipo'] == 'entrada' else '🔴'} {x['ticker']}" for x in est["senales"] if t0 - x["t"] <= 86400]
         posic = [p["ticker"] for p in list(est["nucleo"].values()) + list(est["satelite"].values())]
@@ -439,7 +450,7 @@ def main():
         "volatilidad": {"btc_30d": vol_btc, "objetivo": sis.VOL_OBJETIVO, "factor": fvol},
         "senales": est["senales"][:30], "ordenes": ordenes, "alertas_h": alertas, "btc_1h": btc_1h,
         "exposicion": exposicion, "gestion": {"riesgo_max": sis.RIESGO_MAX, "exposicion_max": sis.EXPOSICION_MAX,
-                                              "caida_btc_1h": sis.CAIDA_BTC_1H, "vol_x": sis.VOL_X_PROTECCION}, "latidos": est["latidos"], "revisiones_24h": revis_24h, "intervalo_s": int(os.getenv("INTERVALO_SEG", "900")),
+                                              "caida_btc_1h": sis.CAIDA_BTC_1H, "vol_x": sis.VOL_X_PROTECCION}, "latidos": est["latidos"], "revisiones_24h": revis_24h, "hora_cierre_utc": HORA_CIERRE, "intervalo_s": int(os.getenv("INTERVALO_SEG", "900")),
         "filas": filas,
         "sistema": {"peso_nucleo": sis.PESO_NUCLEO, "peso_satelite": sis.PESO_SATELITE, "max_satelite": sis.MAX_SATELITE,
                     "entrada": sis.ENTRADA_N, "salida": sis.SALIDA_N, "stop_atr": sis.STOP_ATR, "trail_atr": sis.TRAIL_ATR},
