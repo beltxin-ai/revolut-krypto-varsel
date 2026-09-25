@@ -6,7 +6,7 @@ Sistema de trading para **Revolut X** validado fuera de muestra, con cartera mod
 
 - **Núcleo (50 %)**: BTC y ETH, 25 % cada una, cuando el cierre diario está sobre la SMA50 y la SMA50 sobre la SMA200.
 - **Satélite (50 %)**: hasta 5 altcoins líquidas de Revolut X (10 % cada una). Entrada con cierre sobre el máximo de 55 días, solo si BTC está sobre su SMA200. Stop 2 ATR con trailing de 3 ATR; salida con cierre bajo el mínimo de 20 días.
-- Decisiones con la vela diaria cerrada (00:00 UTC); stops vigilados cada 15 min con el bid de Revolut X.
+- Decisiones con la vela diaria cerrada a las **06:00 UTC** (08:00 en Noruega en verano), validado en `investigacion3.py`; stops vigilados cada 15 min con el bid de Revolut X.
 
 ## Evidencia (`investigacion.py`)
 
