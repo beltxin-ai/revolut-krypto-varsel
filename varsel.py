@@ -32,6 +32,8 @@ MAX_SPREAD = float(os.getenv("MAX_SPREAD", "0.006"))
 ESTABLES = {"USDC", "USDT", "EURC", "DAI", "USDE", "PYUSD", "RLUSD", "FDUSD", "TUSD", "USDS", "USD1"}
 D1 = 86400 * 1000
 H1 = 3600 * 1000
+CAPITAL_EUR = float(os.getenv("CAPITAL_EUR", "600"))   # capital de trading del usuario, en euros
+AVISOS_PROTECCION = os.getenv("AVISOS_PROTECCION", "0") == "1"   # avisos horarios no validados (apagados)
 HORA_CIERRE = int(os.getenv("HORA_CIERRE_UTC", "6"))   # validado (investigacion3.py): día de 06:00 a 06:00 UTC
 log = print
 
@@ -242,6 +244,11 @@ def main():
     dia = dia_utc(datos["BTC"]["t"][-1])        # última vela diaria cerrada
     eventos = []
 
+    # escala a euros: el capital del usuario equivale al valor de la cartera modelo el día que empieza
+    if (est.get("eur") or {}).get("capital") != CAPITAL_EUR:
+        est["eur"] = {"capital": CAPITAL_EUR, "k": CAPITAL_EUR / valorar(est, rx), "desde": int(t0)}
+    K = est["eur"]["k"]
+
     # ---- 1) proceso diario (una vez por vela diaria cerrada)
     if est["ult_dia"] != dia:
         log("Nuevo cierre diario:", dia)
@@ -262,11 +269,14 @@ def main():
         for t in list(est["satelite"]):
             if t not in datos:
                 continue
+            stop_antes = est["satelite"][t].get("stop")
             p = sis.actualizar_trailing(est["satelite"][t], datos[t], series[t])
             if sis.salida_diaria(p, datos[t], series[t]):
                 c = vender(est, "satelite", t, rx, "cierre bajo el mínimo de 20 días")
                 if c:
                     eventos.append(("salida", c))
+            elif stop_antes and p["stop"] > stop_antes * 1.01:
+                eventos.append(("sube_stop", dict(p, stop_antes=stop_antes)))
         # satélite: entradas
         if reg["alcista"]:
             libres = sis.MAX_SATELITE - len(est["satelite"])
@@ -332,7 +342,7 @@ def main():
     est["avisos_h"] = avisadas
 
     # ---- 3) historial de señales y latidos (prueba de que la revisión se ejecuta)
-    for tipo, p in eventos:
+    for tipo, p in [(tp, x) for tp, x in eventos if tp != "sube_stop"]:
         est.setdefault("senales", []).insert(0, {
             "t": int(t0), "dia": dia, "tipo": tipo, "ticker": p["ticker"], "sistema": p.get("sistema"),
             "precio": p["entrada"] if tipo == "entrada" else p.get("salida"), "stop": p.get("stop"),
@@ -344,27 +354,34 @@ def main():
     equity = valorar(est, rx)
     for tipo, p in eventos:
         t = p["ticker"]
+        imp_eur = p["importe"] * K
         if tipo == "entrada":
             riesgo = (1 - p["stop"] / p["entrada"]) if p.get("stop") else None
             q = rx.get(t, {})
             lim = sis.precio_limite(q.get("bid"), datos[t]["c"][-1], q.get("cambio_24h"))
-            sug = sis.tamano_por_riesgo(p["peso"], lim, p.get("stop"))
-            avisar(f"🟢 COMPRAR {t} · {p['sistema']}",
-                   f"Precio Revolut X ~{usd(p['entrada'])} (ask)\n"
-                   f"Tamaño del sistema: {fmt(p['peso'] * 100, 0)} % de tu capital para trading\n"
-                   + (f"Tamaño para arriesgar 1 %: {fmt(sug * 100, 1)} % (no validado)\n" if sug < p["peso"] - 1e-6 else "")
-                   + f"Límite sugerido: {usd(lim)} (no validado)\n"
-                   + (f"Stop: {usd(p['stop'])} (−{fmt(riesgo * 100, 1)} %). Sube solo con el trailing.\n" if riesgo else
-                      "Sin stop fijo: sales cuando se rompa la tendencia diaria.\n")
-                   + "Usa orden limitada en Revolut X (comisión maker 0 %).",
+            s50 = series[t]["sma50"][-1] if t in series else None
+            avisar(f"🟢 COMPRAR {t} · {fmt(imp_eur, 0)} €",
+                   f"Importe: {fmt(imp_eur, 0)} € ({p['sistema']})\n"
+                   f"Orden limitada a {usd(lim)} o menos\n"
+                   + (f"Stop: {usd(p['stop'])} (−{fmt(riesgo * 100, 1)} %) → pérdida máxima ~{fmt(imp_eur * riesgo, 0)} €\n"
+                      "Pon una orden stop en Revolut X si la app lo permite.\n" if riesgo else
+                      f"Sin stop fijo: se vende si el cierre diario queda bajo {usd(s50)} (media de 50 días).\n"),
                    click=enlace(t), tags="green_circle")
+        elif tipo == "sube_stop":
+            aseg = (p["unidades"] * p["stop"] * (1 - COMISION) - p["importe"]) * K
+            avisar(f"🔒 SUBE EL STOP de {t}",
+                   f"Nuevo stop: {usd(p['stop'])} (antes {usd(p['stop_antes'])})\n"
+                   + (f"Si salta, aseguras +{fmt(aseg, 0)} €." if aseg >= 0 else f"Si salta, la pérdida baja a {fmt(aseg, 0)} €.")
+                   + "\nMueve tu orden stop en Revolut X.",
+                   click=enlace(t), tags="lock", prioridad=3)
         else:
-            avisar(f"🔴 VENDER {t} · {'STOP' if tipo == 'stop' else p['sistema']}",
-                   f"Motivo: {p['motivo']}\nPrecio ~{usd(p['salida'])} (bid) · entrada {usd(p['entrada'])}\n"
-                   f"Resultado neto: {'+' if p['ret'] >= 0 else ''}{fmt(p['ret'] * 100, 1)} %",
+            res_eur = p["ret"] * imp_eur
+            avisar(f"🔴 VENDER TODO {t} · {'+' if res_eur >= 0 else ''}{fmt(res_eur, 0)} €",
+                   f"Motivo: {p['motivo']}\nPrecio ~{usd(p['salida'])} · entrada {usd(p['entrada'])}\n"
+                   f"Resultado: {'+' if res_eur >= 0 else ''}{fmt(res_eur, 0)} € ({'+' if p['ret'] >= 0 else ''}{fmt(p['ret'] * 100, 1)} %)",
                    click=enlace(t), tags="red_circle", prioridad=5 if tipo == "stop" else 4)
 
-    for a in nuevas_alertas:
+    for a in (nuevas_alertas if AVISOS_PROTECCION else []):
         avisar(f"⚠️ PROTEGER {a['ticker']}", a["texto"] + "\nProtección no validada: el sistema no vende; tú decides.",
                click=enlace(a["ticker"]), tags="warning", prioridad=4)
 
@@ -404,6 +421,28 @@ def main():
                         "peso": p["peso"], "sugerido": sis.tamano_por_riesgo(p["peso"], lim, p.get("stop")),
                         "precio": q.get("mid"), "cambio_24h": q.get("cambio_24h"), "t": s_["t"]})
     exposicion = 1 - est["caja"] / equity if equity else 0
+    posiciones = []
+    for bloque in ("nucleo", "satelite"):
+        for t, p in est[bloque].items():
+            q = rx.get(t, {})
+            px = q.get("bid") or p["ultimo"]
+            valor_eur = p["unidades"] * px * (1 - COMISION) * K
+            inv_eur = p["importe"] * K
+            x = {"ticker": t, "sistema": p.get("sistema"), "entrada": p["entrada"], "precio": px, "t": p["t"],
+                 "invertido_eur": inv_eur, "valor_eur": valor_eur, "pnl_eur": valor_eur - inv_eur,
+                 "pnl_pct": valor_eur / inv_eur - 1 if inv_eur else None, "stop": p.get("stop")}
+            if p.get("stop"):
+                x["asegurado_eur"] = (p["unidades"] * p["stop"] * (1 - COMISION) - p["importe"]) * K
+                x["dist_stop"] = 1 - p["stop"] / px if px else None
+                x["min20"] = series[t]["min20"][-1] if t in series else None
+            else:
+                s50 = series[t]["sma50"][-1] if t in series else None
+                x["sma50"], x["dist_sma50"] = s50, (1 - s50 / px) if (s50 and px) else None
+            posiciones.append(x)
+    for o in ordenes:
+        p = est["nucleo"].get(o["ticker"]) or est["satelite"].get(o["ticker"])
+        o["importe_eur"] = p["importe"] * K
+        o["perdida_max_eur"] = o["importe_eur"] * (1 - o["stop"] / o["limite"]) if o.get("stop") and o.get("limite") else None
 
     curva = est["curva"][-400:]
     est["cerradas"] = est["cerradas"][:300]
@@ -414,7 +453,8 @@ def main():
                "aciertos": len(ganadas) / len(ops) if ops else None,
                "media": sum(ops) / len(ops) if ops else None,
                "profit_factor": (sum(ganadas) / sum(perdidas)) if (ganadas and perdidas) else None,
-               "desde": est["inicio"],
+               "desde": est["inicio"], "capital_eur": CAPITAL_EUR, "valor_eur": equity * K,
+               "pnl_eur": equity * K - CAPITAL_EUR, "desde_eur": est["eur"]["desde"], "caja_eur": est["caja"] * K,
                "btc_desde": (rx["BTC"]["mid"] / curva[0][2] - 1) if (curva and curva[0][2] and "BTC" in rx) else None}
 
     if RESPALDO["okx"] or RESPALDO["fallos"]:
@@ -430,7 +470,7 @@ def main():
                f"Revisiones 24 h: {revis_24h}/96 ({fmt(min(1, revis_24h / 96) * 100, 0)} %)\n"
                f"Fuentes: {estado_f}\n"
                f"Régimen: {'alcista' if reg['alcista'] else 'BAJISTA'} (BTC {fmt((reg['distancia'] or 0) * 100, 1)} % vs SMA200)\n"
-               f"Cartera modelo: {fmt((equity - 1) * 100, 1)} % · exposición {fmt(exposicion * 100, 0)} %\n"
+               f"Tu capital: {fmt(equity * K, 0)} € ({'+' if equity * K >= CAPITAL_EUR else ''}{fmt(equity * K - CAPITAL_EUR, 0)} € desde que empezaste)\n"
                f"Posiciones: {', '.join(posic) or 'ninguna'}\n"
                f"Señales 24 h: {' '.join(sen24) or 'ninguna'}",
                click=enlace(), tags="clipboard", prioridad=2)
@@ -447,6 +487,7 @@ def main():
                     "caja": est["caja"], "resumen": resumen, "curva": curva, "cerradas": est["cerradas"][:100]},
         "candidatas_hoy": candidatas[:10], "cerca_de_ruptura": cerca[:15],
         "eventos": [{"tipo": tp, "ticker": p["ticker"]} for tp, p in eventos],
+        "posiciones": posiciones, "eur": {"capital": CAPITAL_EUR, "k": K, "desde": est["eur"]["desde"]},
         "volatilidad": {"btc_30d": vol_btc, "objetivo": sis.VOL_OBJETIVO, "factor": fvol},
         "senales": est["senales"][:30], "ordenes": ordenes, "alertas_h": alertas, "btc_1h": btc_1h,
         "exposicion": exposicion, "gestion": {"riesgo_max": sis.RIESGO_MAX, "exposicion_max": sis.EXPOSICION_MAX,
